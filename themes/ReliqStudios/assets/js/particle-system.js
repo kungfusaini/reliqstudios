@@ -4,7 +4,7 @@ class ParticleSystem {
     this.ctx = canvas.getContext('2d');
     this.chestImage = chestImage;
     this.particles = [];
-    this.particleCount = 10000;
+    this.particleCount = 6000;
     this.animationId = null;
     this.imageData = null;
     this.isProcessing = false;
@@ -100,7 +100,7 @@ class ParticleSystem {
     const width = this.imageData.width;
     const height = this.imageData.height;
     
-    // Sample pixels to create particles - more conservative step calculation
+    // Sample pixels to create particles - structured dot matrix
     const step = Math.max(3, Math.floor(Math.sqrt((width * height) / this.particleCount)));
     
     for (let y = 0; y < height; y += step) {
@@ -114,10 +114,10 @@ class ParticleSystem {
         // More restrictive filtering - higher alpha threshold and darker pixels
         if (a > 150 && (r < 240 || g < 240 || b < 240)) {
           this.particles.push({
-            x: x + (Math.random() - 0.5) * step,
-            y: y + (Math.random() - 0.5) * step,
-            originalX: x + (Math.random() - 0.5) * step,
-            originalY: y + (Math.random() - 0.5) * step,
+            x: x, // Fixed position for dot matrix
+            y: y, // Fixed position for dot matrix
+            originalX: x,
+            originalY: y,
             vx: (Math.random() - 0.5) * 0.2,
             vy: (Math.random() - 0.5) * 0.2,
             size: Math.random() * 1 + 3,
@@ -159,7 +159,9 @@ class ParticleSystem {
     this.particles.forEach(particle => {
       // Set particle color from original image pixel
       this.ctx.fillStyle = particle.color.replace('1)', `${particle.opacity})`);
-      this.ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+      this.ctx.beginPath();
+      this.ctx.arc(particle.x, particle.y, particle.size / 2, 0, Math.PI * 2);
+      this.ctx.fill();
     });
   }
   
