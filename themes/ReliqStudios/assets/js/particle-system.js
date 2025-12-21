@@ -34,6 +34,13 @@ class ParticleSystem {
     }
   }
   
+  // Public method to update particles when chest frame changes
+  updateFromNewFrame() {
+    if (!this.isProcessing) {
+      this.processImageAndCreateParticles();
+    }
+  }
+  
   setupEventListeners() {
     // Handle window resize
     window.addEventListener('resize', () => {
