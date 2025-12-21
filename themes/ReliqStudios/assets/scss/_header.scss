@@ -4,24 +4,7 @@
   justify-content: center;
   position: relative;
   padding: 0;
-  // Default
-  background: $light-background-header;
-
-  @media (prefers-color-scheme: dark) {
-    background: $dark-background-header;
-  }
-
-  @media (prefers-color-scheme: light) {
-    background: $light-background-header;
-  }
-
-  [data-theme=dark] & {
-    background: $dark-background-header;
-  }
-
-  [data-theme=light] & {
-    background: $light-background-header;
-  }
+  background: $background-header;
 
   &__left {
     display: flex;
@@ -76,21 +59,3 @@
   }
 }
 
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.theme-toggler {
-  fill: currentColor;
-}
-
-.not-selectable {
-  user-select: none;
-  -webkit-user-select: none;  
-  -moz-user-select: none;    
-  -ms-user-select: none;      
-}

@@ -127,29 +127,8 @@
       text-decoration: none;
       letter-spacing: 0.1em;
       z-index: 1;
-      // Default
-      background: $light-background;
-      color: $light-color-secondary;
-
-      @media (prefers-color-scheme: dark) {
-        background: $dark-background;
-        color: $dark-color-secondary;
-      }
-    
-      @media (prefers-color-scheme: light) {
-        background: $light-background;
-        color: $light-color-secondary;
-      }
-    
-      [data-theme=dark] & {
-        background: $dark-background;
-        color: $dark-color-secondary;
-      }
-    
-      [data-theme=light] & {
-        background: $light-background;
-        color: $light-color-secondary;
-      }
+      background: $background;
+      color: $color-secondary;
     }
 
     hr {
@@ -186,24 +165,7 @@
   padding: 0;
   cursor: pointer;
   appearance: none;
-  // Default
-  background: $light-background-secondary;
-
-  @media (prefers-color-scheme: dark) {
-    background: $dark-background-secondary;
-  }
-
-  @media (prefers-color-scheme: light) {
-    background: $light-background-secondary;
-  }
-
-  [data-theme=dark] & {
-    background: $dark-background-secondary;
-  }
-
-  [data-theme=light] & {
-    background: $light-background-secondary;
-  }
+  background: $background-secondary;
 
   + .button {
     margin-left: 10px;

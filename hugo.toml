@@ -21,7 +21,7 @@ theme = "ReliqStudios"
   homeSubtitle = "Building Digital Experiences"
   
   # Features
-  enableThemeToggle = true
+  enableThemeToggle = false
   enableSharingButtons = true
   enableReadingTime = true
   
