@@ -31,8 +31,6 @@ theme = "ReliqStudios"
 [params.Logo]
   path = "/logo.svg"
   alt = "Reliq Studios Logo"
-  logoMark = ">"
-  logoText = "reliq-studios"
   logoHomeLink = "/"
 
 [params.footer]
