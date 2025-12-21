@@ -57,12 +57,14 @@ class ChestAnimation {
   }
 }
 
+// Animation disabled - using static test image
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const chestContainer = document.querySelector('.chest-container');
   const chestImage = document.querySelector('.chest-image');
   
   if (chestContainer && chestImage) {
-    window.chestAnimation = new ChestAnimation(chestContainer, chestImage);
+    // Animation disabled - using static test image
+    // window.chestAnimation = new ChestAnimation(chestContainer, chestImage);
   }
 });
