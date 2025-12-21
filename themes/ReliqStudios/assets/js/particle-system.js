@@ -7,9 +7,6 @@ class ParticleSystem {
     this.particleCount = 4000; // Main image particles
     this.particleSize = 6; // Easy dot size variable
     this.particleSpacing = 10; // Easy dot spacing variable
-    this.backgroundParticleSize = 4; // Smaller dots for whitespace
-    this.backgroundParticleSpacing = 8; // Easy spacing for background particles
-    this.backgroundParticleCount = 3000; // Number of whitespace particles
     this.animationId = null;
     this.imageData = null;
     this.isProcessing = false;
@@ -134,44 +131,11 @@ class ParticleSystem {
       }
     }
     
-    // Add background particles in transparent/whitespace areas
-    this.createBackgroundParticles();
+    // Background particles now handled by BackgroundParticleSystem
+    // No need to create background particles here
   }
   
-  createBackgroundParticles() {
-    const data = this.imageData.data;
-    const width = this.imageData.width;
-    const height = this.imageData.height;
-    
-    // Use background spacing variable
-    const bgStep = this.backgroundParticleSpacing;
-    
-    for (let y = 0; y < height; y += bgStep) {
-      for (let x = 0; x < width; x += bgStep) {
-        const index = (y * width + x) * 4;
-        const r = data[index];
-        const g = data[index + 1];
-        const b = data[index + 2];
-        const a = data[index + 3];
-        
-        // Create particles in transparent or very light areas
-        if (a < 50 || (r > 240 && g > 240 && b > 240)) {
-          this.particles.push({
-            x: x + (Math.random() - 0.5) * bgStep, // Slight randomization
-            y: y + (Math.random() - 0.5) * bgStep,
-            originalX: x + (Math.random() - 0.5) * bgStep,
-            originalY: y + (Math.random() - 0.5) * bgStep,
-            vx: (Math.random() - 0.5) * 0.1, // Slower movement for background
-            vy: (Math.random() - 0.5) * 0.1,
-            size: this.backgroundParticleSize,
-            opacity: 0.3 + Math.random() * 0.3, // Lower opacity for background
-            color: `rgba(${100 + Math.random() * 50}, ${100 + Math.random() * 50}, ${100 + Math.random() * 50}, 1)`, // Grey colors
-            jitter: Math.random() * 0.3
-          });
-        }
-      }
-    }
-  }
+
   
   updateParticles() {
     this.particles.forEach(particle => {
@@ -238,8 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    canvas.style.pointerEvents = 'auto'; // Allow interaction
-    canvas.style.zIndex = '10';
+    canvas.style.pointerEvents = 'none'; // No interaction needed for image particles
+    canvas.style.zIndex = '5'; // Above background but below content
     
     // Position canvas over the chest container
     chestContainer.appendChild(canvas);
