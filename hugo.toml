@@ -29,6 +29,8 @@ theme = "ReliqStudios"
     name = "Reliq Studios Team"
 
 [params.logo]
+  path = "/logo.svg"
+  alt = "Reliq Studios Logo"
   logoMark = ">"
   logoText = "reliq-studios"
   logoHomeLink = "/"
