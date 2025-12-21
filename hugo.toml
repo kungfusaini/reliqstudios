@@ -56,33 +56,3 @@ theme = "ReliqStudios"
     subtitle = "Creative Digital Solutions"
 
 [menu]
-  [[menu.main]]
-    identifier = "home"
-    name = "Home"
-    url = "/"
-    weight = 1
-    
-  [[menu.main]]
-    identifier = "about"
-    name = "About"
-    url = "/about/"
-    weight = 2
-    
-  [[menu.main]]
-    identifier = "services"
-    name = "Services"
-    url = "/services/"
-    weight = 3
-    
-  [[menu.main]]
-    identifier = "portfolio"
-    name = "Portfolio"
-    url = "/portfolio/"
-    weight = 4
-    
-  [[menu.main]]
-    identifier = "contact"
-    name = "Contact"
-    url = "/contact/"
-    weight = 6
-

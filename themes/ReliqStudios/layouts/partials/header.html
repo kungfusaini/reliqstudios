@@ -1,31 +1,35 @@
 <header class="header">
     <span class="header__inner">
-        <nav class="header__left">
-            {{- $currentPage := . -}}
-            {{ range sort .Site.Menus.main ".Identifier" -}}
-                {{ if not .HasChildren }}
-                    {{ if eq .Weight 1 }}
-                        <a href="{{ .URL | relLangURL }}" class="nav-link">{{ .Name }}</a>
+        {{- if .Site.Menus }}
+            <nav class="header__left">
+                {{- $currentPage := . -}}
+                {{ range sort .Site.Menus.main ".Identifier" -}}
+                    {{ if not .HasChildren }}
+                        {{ if eq .Weight 1 }}
+                            <a href="{{ .URL | relLangURL }}" class="nav-link">{{ .Name }}</a>
+                        {{ end }}
                     {{ end }}
-                {{ end }}
-            {{- end }}
-        </nav>
+                {{- end }}
+            </nav>
+        {{- end }}
 
         {{ partial "logo.html" . }}
 
-        <span class="header__right">
-            {{- $currentPage := . -}}
-            {{ range sort .Site.Menus.main ".Identifier" -}}
-                {{ if not .HasChildren }}
-                    {{ if gt .Weight 1 }}
-                        <a href="{{ .URL | relLangURL }}" class="nav-link">{{ .Name }}</a>
+        {{- if .Site.Menus }}
+            <span class="header__right">
+                {{- $currentPage := . -}}
+                {{ range sort .Site.Menus.main ".Identifier" -}}
+                    {{ if not .HasChildren }}
+                        {{ if gt .Weight 1 }}
+                            <a href="{{ .URL | relLangURL }}" class="nav-link">{{ .Name }}</a>
+                        {{ end }}
                     {{ end }}
-                {{ end }}
-            {{- end }}
+                {{- end }}
 
-            {{- if .Site.Params.EnableThemeToggle }}
-                <span class="theme-toggle not-selectable">{{ partial "theme-toggle-icon.html" . }}</span>
-            {{- end}}
-        </span>
+                {{- if .Site.Params.EnableThemeToggle }}
+                    <span class="theme-toggle not-selectable">{{ partial "theme-toggle-icon.html" . }}</span>
+                {{- end}}
+            </span>
+        {{- end }}
     </span>
 </header>
