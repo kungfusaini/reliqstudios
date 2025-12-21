@@ -28,7 +28,7 @@ theme = "ReliqStudios"
   [params.author]
     name = "Reliq Studios Team"
 
-[params.logo]
+[params.Logo]
   path = "/logo.svg"
   alt = "Reliq Studios Logo"
   logoMark = ">"
