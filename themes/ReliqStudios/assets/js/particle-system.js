@@ -4,7 +4,7 @@ class ParticleSystem {
     this.ctx = canvas.getContext('2d');
     this.chestImage = chestImage;
     this.particles = [];
-    this.particleCount = 3000;
+    this.particleCount = 10000;
     this.animationId = null;
     this.imageData = null;
     this.isProcessing = false;
@@ -93,8 +93,8 @@ class ParticleSystem {
     const width = this.imageData.width;
     const height = this.imageData.height;
     
-    // Sample pixels to create particles
-    const step = Math.max(2, Math.floor(Math.sqrt((width * height) / this.particleCount)));
+    // Sample pixels to create particles - more conservative step calculation
+    const step = Math.max(3, Math.floor(Math.sqrt((width * height) / this.particleCount)));
     
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
@@ -104,16 +104,16 @@ class ParticleSystem {
         const b = data[index + 2];
         const a = data[index + 3];
         
-        // Skip transparent or very light pixels
-        if (a > 30 && (r < 250 || g < 250 || b < 250)) {
+        // More restrictive filtering - higher alpha threshold and darker pixels
+        if (a > 150 && (r < 240 || g < 240 || b < 240)) {
           this.particles.push({
-            x: x,
-            y: y,
-            originalX: x,
-            originalY: y,
+            x: x + (Math.random() - 0.5) * step,
+            y: y + (Math.random() - 0.5) * step,
+            originalX: x + (Math.random() - 0.5) * step,
+            originalY: y + (Math.random() - 0.5) * step,
             vx: (Math.random() - 0.5) * 0.2,
             vy: (Math.random() - 0.5) * 0.2,
-            size: Math.random() * 1.5 + 1.5,
+            size: Math.random() * 1 + 3,
             opacity: 0.8 + Math.random() * 0.2,
             color: `rgba(${r}, ${g}, ${b}, 1)`,
             jitter: Math.random() * 0.5
