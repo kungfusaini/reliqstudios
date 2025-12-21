@@ -1,0 +1,35 @@
+// Chest/Sprite container and image styles
+.chest-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+  position: relative; // Needed for canvas overlay
+}
+
+.chest-image {
+  margin-left: 10rem;
+  margin-top: 10rem;
+  width: 600px;
+  height: auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  display: block; // Ensure proper positioning
+  visibility: hidden; // Hide the image, but particles will show its shape
+  
+  @media #{$media-size-phone} {
+    width: 300px;
+  }
+}
+
+// Particle canvas overlay (image particles)
+.particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+}
