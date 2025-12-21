@@ -1,16 +1,26 @@
 <header class="header">
     <span class="header__inner">
+        <nav class="header__left">
+            {{- $currentPage := . -}}
+            {{ range sort .Site.Menus.main ".Identifier" -}}
+                {{ if not .HasChildren }}
+                    {{ if eq .Weight 1 }}
+                        <a href="{{ .URL | relLangURL }}" class="nav-link">{{ .Name }}</a>
+                    {{ end }}
+                {{ end }}
+            {{- end }}
+        </nav>
+
         {{ partial "logo.html" . }}
 
         <span class="header__right">
-            {{- if len .Site.Menus }}
-                {{ partial "menu.html" . }}
-                <span class="menu-trigger">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-                    </svg>
-                </span>
+            {{- $currentPage := . -}}
+            {{ range sort .Site.Menus.main ".Identifier" -}}
+                {{ if not .HasChildren }}
+                    {{ if gt .Weight 1 }}
+                        <a href="{{ .URL | relLangURL }}" class="nav-link">{{ .Name }}</a>
+                    {{ end }}
+                {{ end }}
             {{- end }}
 
             {{- if .Site.Params.EnableThemeToggle }}
