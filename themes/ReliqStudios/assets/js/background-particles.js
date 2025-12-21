@@ -3,8 +3,7 @@ class BackgroundParticleSystem {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.particles = [];
-    this.particleCount = 800; // Background particles count - reduced for subtlety
-    this.particleSize = 3; // Small particle size
+    this.config = window.particleConfig.background;
     this.animationId = null;
     
     this.resizeCanvas();
@@ -31,8 +30,8 @@ class BackgroundParticleSystem {
   createBackgroundParticles() {
     this.particles = [];
     
-    // Use dot matrix pattern like chest particles
-    const step = 12; // Spacing between dots
+    // Auto-calculate based on viewport and spacing
+    const step = this.config.spacing;
     const width = this.canvas.width;
     const height = this.canvas.height;
     
@@ -45,17 +44,17 @@ class BackgroundParticleSystem {
           originalY: y,
           vx: 0, // No initial velocity
           vy: 0, // No initial velocity
-          size: this.particleSize + Math.random() * 1, // Slight size variation
-          opacity: 0.08 + Math.random() * 0.15, // Very subtle opacity
+          size: this.config.size + Math.random() * 1, // Slight size variation
+          opacity: this.config.opacityMin + Math.random() * (this.config.opacityMax - this.config.opacityMin),
           color: this.getRandomGreyColor(),
-          jitter: Math.random() * 0.3
+          jitter: Math.random() * this.config.jitter
         });
       }
     }
   }
   
   getRandomGreyColor() {
-    const grey = Math.floor(80 + Math.random() * 40); // Range 80-120
+    const grey = Math.floor(this.config.greyMin + Math.random() * (this.config.greyMax - this.config.greyMin));
     return `rgba(${grey}, ${grey}, ${grey}, 1)`;
   }
   

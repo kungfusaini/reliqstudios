@@ -4,9 +4,7 @@ class ParticleSystem {
     this.ctx = canvas.getContext('2d');
     this.chestImage = chestImage;
     this.particles = [];
-    this.particleCount = 4000; // Main image particles
-    this.particleSize = 6; // Easy dot size variable
-    this.particleSpacing = 10; // Easy dot spacing variable
+    this.config = window.particleConfig.chest;
     this.animationId = null;
     this.imageData = null;
     this.isProcessing = false;
@@ -103,7 +101,7 @@ class ParticleSystem {
     const height = this.imageData.height;
     
     // Sample pixels to create particles - use the spacing variable
-    const step = this.particleSpacing;
+    const step = this.config.spacing;
     
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
@@ -114,7 +112,7 @@ class ParticleSystem {
         const a = data[index + 3];
         
         // More restrictive filtering - higher alpha threshold and darker pixels
-        if (a > 150 && (r < 240 || g < 240 || b < 240)) {
+        if (a > this.config.alphaThreshold && (r < this.config.colorThreshold || g < this.config.colorThreshold || b < this.config.colorThreshold)) {
           this.particles.push({
             x: x, // Fixed position for dot matrix
             y: y, // Fixed position for dot matrix
@@ -122,10 +120,10 @@ class ParticleSystem {
             originalY: y,
             vx: (Math.random() - 0.5) * 0.2,
             vy: (Math.random() - 0.5) * 0.2,
-            size: this.particleSize,
-            opacity: 0.8 + Math.random() * 0.2,
+            size: this.config.size,
+            opacity: this.config.opacity + Math.random() * 0.2,
             color: `rgba(${r}, ${g}, ${b}, 1)`,
-            jitter: Math.random() * 0.5
+            jitter: Math.random() * this.config.jitter
           });
         }
       }
