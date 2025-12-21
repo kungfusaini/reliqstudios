@@ -3,7 +3,7 @@ class BackgroundParticleSystem {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.particles = [];
-    this.particleCount = 1500; // Background particles count
+    this.particleCount = 800; // Background particles count - reduced for subtlety
     this.particleSize = 3; // Small particle size
     this.animationId = null;
     
@@ -31,19 +31,26 @@ class BackgroundParticleSystem {
   createBackgroundParticles() {
     this.particles = [];
     
-    for (let i = 0; i < this.particleCount; i++) {
-      this.particles.push({
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * this.canvas.height,
-        originalX: Math.random() * this.canvas.width,
-        originalY: Math.random() * this.canvas.height,
-        vx: (Math.random() - 0.5) * 0.3, // Gentle movement
-        vy: (Math.random() - 0.5) * 0.3,
-        size: this.particleSize + Math.random() * 2, // Slight size variation
-        opacity: 0.2 + Math.random() * 0.3, // Low opacity for subtle effect
-        color: this.getRandomGreyColor(),
-        jitter: Math.random() * 0.5
-      });
+    // Use dot matrix pattern like chest particles
+    const step = 12; // Spacing between dots
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    
+    for (let y = 0; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
+        this.particles.push({
+          x: x, // Fixed position for dot matrix
+          y: y, // Fixed position for dot matrix
+          originalX: x,
+          originalY: y,
+          vx: 0, // No initial velocity
+          vy: 0, // No initial velocity
+          size: this.particleSize + Math.random() * 1, // Slight size variation
+          opacity: 0.08 + Math.random() * 0.15, // Very subtle opacity
+          color: this.getRandomGreyColor(),
+          jitter: Math.random() * 0.3
+        });
+      }
     }
   }
   
@@ -58,20 +65,20 @@ class BackgroundParticleSystem {
       const dx = particle.originalX - particle.x;
       const dy = particle.originalY - particle.y;
       
-      particle.vx += dx * 0.01; // Weaker spring for more floaty effect
-      particle.vy += dy * 0.01;
+      particle.vx += dx * 0.005; // Even weaker spring
+      particle.vy += dy * 0.005;
       
-      // Damping
-      particle.vx *= 0.96;
-      particle.vy *= 0.96;
+      // Stronger damping
+      particle.vx *= 0.92;
+      particle.vy *= 0.92;
       
-      // Add gentle jittering
+      // Much gentler jittering
       particle.x += particle.vx + (Math.random() - 0.5) * particle.jitter;
       particle.y += particle.vy + (Math.random() - 0.5) * particle.jitter;
       
-      // Subtle opacity pulsing
-      particle.opacity += (Math.random() - 0.5) * 0.005;
-      particle.opacity = Math.max(0.1, Math.min(0.6, particle.opacity));
+      // Very subtle opacity pulsing
+      particle.opacity += (Math.random() - 0.5) * 0.002;
+      particle.opacity = Math.max(0.05, Math.min(0.3, particle.opacity));
     });
   }
   
