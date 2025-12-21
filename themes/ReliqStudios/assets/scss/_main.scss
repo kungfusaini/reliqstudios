@@ -350,3 +350,23 @@ hr {
 .highlight {
   margin: 10px auto;
 }
+
+// Chest image styles
+.chest-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+}
+
+.chest-image {
+  width: 600px;
+  height: auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  
+  @media #{$media-size-phone} {
+    width: 300px;
+  }
+}
