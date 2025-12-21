@@ -1,0 +1,88 @@
+baseURL = "https://reliqstudios.com"
+title = "Reliq Studios"
+languageCode = "en-us"
+theme = "ReliqStudios"
+
+[pagination]
+  pagerSize = 10
+
+[params]
+  dateform = "Jan 2, 2006"
+  dateformShort = "Jan 2"
+  dateformNum = "2006-01-02"
+  dateformNumTime = "2006-01-02 15:04"
+  
+  # Metadata
+  description = "Reliq Studios - Creative Digital Solutions"
+  keywords = "web development, design, digital agency"
+  images = [""]
+  
+  # Home subtitle
+  homeSubtitle = "Building Digital Experiences"
+  
+  # Features
+  enableThemeToggle = true
+  enableSharingButtons = true
+  enableReadingTime = true
+  
+  [params.author]
+    name = "Reliq Studios Team"
+
+[params.logo]
+  logoMark = ">"
+  logoText = "reliq-studios"
+  logoHomeLink = "/"
+
+[params.footer]
+  trademark = 2025
+  rss = true
+  copyright = true
+  author = true
+  bottomText = [
+    "Built with <a href=\"https://gohugo.io\">Hugo</a>",
+    "Theme by <a href=\"https://github.com/rhazdon\">Djordje Atlialp</a>"
+  ]
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+  series = "series"
+
+[languages]
+  [languages.en]
+    weight = 1
+    copyright = '<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>'
+  [languages.en.params]
+    subtitle = "Creative Digital Solutions"
+
+[menu]
+  [[menu.main]]
+    identifier = "home"
+    name = "Home"
+    url = "/"
+    weight = 1
+    
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 2
+    
+  [[menu.main]]
+    identifier = "services"
+    name = "Services"
+    url = "/services/"
+    weight = 3
+    
+  [[menu.main]]
+    identifier = "portfolio"
+    name = "Portfolio"
+    url = "/portfolio/"
+    weight = 4
+    
+  [[menu.main]]
+    identifier = "contact"
+    name = "Contact"
+    url = "/contact/"
+    weight = 6
+
