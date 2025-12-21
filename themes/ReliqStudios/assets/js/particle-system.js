@@ -5,6 +5,8 @@ class ParticleSystem {
     this.chestImage = chestImage;
     this.particles = [];
     this.particleCount = 6000;
+    this.particleSize = 6; // Easy dot size variable
+    this.particleSpacing = 10; // Easy dot spacing variable
     this.animationId = null;
     this.imageData = null;
     this.isProcessing = false;
@@ -100,8 +102,8 @@ class ParticleSystem {
     const width = this.imageData.width;
     const height = this.imageData.height;
     
-    // Sample pixels to create particles - structured dot matrix
-    const step = Math.max(3, Math.floor(Math.sqrt((width * height) / this.particleCount)));
+    // Sample pixels to create particles - use the spacing variable
+    const step = this.particleSpacing;
     
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
@@ -120,7 +122,7 @@ class ParticleSystem {
             originalY: y,
             vx: (Math.random() - 0.5) * 0.2,
             vy: (Math.random() - 0.5) * 0.2,
-            size: Math.random() * 1 + 3,
+            size: this.particleSize,
             opacity: 0.8 + Math.random() * 0.2,
             color: `rgba(${r}, ${g}, ${b}, 1)`,
             jitter: Math.random() * 0.5
