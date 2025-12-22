@@ -28,7 +28,9 @@ class ParticleSystem {
     this.chestImage.style.marginLeft = 'auto';
     this.chestImage.style.marginRight = 'auto';
     this.chestImage.style.display = 'block';
-    
+    // Apply sprite offset to canvas for centering
+    this.canvas.style.setProperty('--sprite-offset-x', `${this.config.spriteOffsetX}px`);
+    this.canvas.style.setProperty('--sprite-offset-y', `${this.config.spriteOffsetY}px`);    
     // Scale factor for particle sizing (always 1.0 since we use target size directly)
     return 1.0;
   }

@@ -15,7 +15,10 @@ const particleConfig = {
   chest: {
     // Target image size for scaling and particle calculations
     targetImageSize: 600,
-    
+
+    // Sprite offset to center content
+    spriteOffsetX: -90, // Horizontal: negative = left, positive = right
+    spriteOffsetY: -100,     // Vertical: negative = up, positive = down    
     // Visual density settings
     sizeToSpacingRatio: 0.6,
     
