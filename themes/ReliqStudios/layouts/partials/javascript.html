@@ -1,5 +1,5 @@
 {{ $main := resources.Get "js/main.js" }}
-{{ $particleImage := resources.Get "js/particle-image.min.js" }}
+{{ $particleImage := resources.Get "js/particle-image-responsive.js" }}
 {{ $menu := resources.Get "js/menu.js" }}
 {{ $prism := resources.Get "js/prism.js" }}
 {{ $secureJS := slice $main $particleImage $menu $prism | resources.Concat "bundle.js" | resources.Minify | resources.Fingerprint "sha512" }}

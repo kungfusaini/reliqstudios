@@ -1,15 +1,29 @@
 {
   "particles": {
-    "density": 150,
-    "color": "#ffffff",
-    "size": {
-      "value": 1.5,
-      "random": false
+    
+    "color": "#3c3836",
+    "responsive": {
+      "enabled": true,
+      "size": {
+        "value": 3,
+        "random": false,
+        "min_size": 1,
+        "max_size": 10,
+        "scale_factor": 0.0005,
+        "base_viewport": 600
+      },
+      "density": {
+        "base_density": 50,
+        "min_density": 50,
+        "max_density": 80,
+        "scale_factor": 0.08,
+        "base_viewport": 600
+      }
     },
     "movement": {
       "speed": 1,
       "restless": {
-        "enabled": false,
+        "enabled": true,
         "value": 10
       }
     },
