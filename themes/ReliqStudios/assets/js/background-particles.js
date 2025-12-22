@@ -9,24 +9,15 @@ class BackgroundParticleSystem {
     this.resizeCanvas();
     this.createBackgroundParticles();
     this.animate();
-    this.setupEventListeners();
   }
-  
+   
   resizeCanvas() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.canvas.style.width = `${window.innerWidth}px`;
     this.canvas.style.height = `${window.innerHeight}px`;
   }
-  
-  setupEventListeners() {
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      this.resizeCanvas();
-      this.createBackgroundParticles(); // Recreate particles for new dimensions
-    });
-  }
-  
+   
   createBackgroundParticles() {
     this.particles = [];
     
@@ -52,59 +43,37 @@ class BackgroundParticleSystem {
       }
     }
   }
-  
+   
   getRandomGreyColor() {
     const grey = Math.floor(this.config.greyMin + Math.random() * (this.config.greyMax - this.config.greyMin));
     return `rgba(${grey}, ${grey}, ${grey}, 1)`;
   }
-  
+   
   updateParticles() {
     this.particles.forEach(particle => {
-      // Spring force to return to original position
-      const dx = particle.originalX - particle.x;
-      const dy = particle.originalY - particle.y;
-      
-      particle.vx += dx * 0.005; // Even weaker spring
-      particle.vy += dy * 0.005;
-      
-      // Stronger damping
-      particle.vx *= 0.92;
-      particle.vy *= 0.92;
-      
-      // Much gentler jittering
-      particle.x += particle.vx + (Math.random() - 0.5) * particle.jitter;
-      particle.y += particle.vy + (Math.random() - 0.5) * particle.jitter;
-      
-      // Very subtle opacity pulsing
-      particle.opacity += (Math.random() - 0.5) * 0.002;
-      particle.opacity = Math.max(0.05, Math.min(0.3, particle.opacity));
+      ParticlePhysics.updateBackgroundParticle(particle);
     });
   }
-  
+   
   drawParticles() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.particles.forEach(particle => {
-      // Set particle color with opacity
-      this.ctx.fillStyle = particle.color.replace('1)', `${particle.opacity})`);
-      this.ctx.beginPath();
-      this.ctx.arc(particle.x, particle.y, particle.size / 2, 0, Math.PI * 2);
-      this.ctx.fill();
+      ParticlePhysics.drawParticle(this.ctx, particle);
     });
   }
-  
+   
   animate() {
     this.updateParticles();
     this.drawParticles();
     this.animationId = requestAnimationFrame(() => this.animate());
   }
-  
+   
   destroy() {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
-    window.removeEventListener('resize', this.resizeCanvas);
   }
 }
 

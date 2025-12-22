@@ -36,13 +36,6 @@ class ChestAnimation {
     
     // Update image source
     this.imageElement.src = `/chest/${this.frames[this.currentFrame]}.png`;
-    
-    // Notify particle system to update
-    if (window.particleSystem) {
-      setTimeout(() => {
-        window.particleSystem.updateFromNewFrame();
-      }, 50); // Small delay to ensure image loads
-    }
   }
   
   stop() {

@@ -1,4 +1,4 @@
-// Chest/Sprite container and image styles
+// Chest/Sprite container and image styles (simplified)
 .chest-container {
   display: flex;
   justify-content: center;
@@ -8,10 +8,7 @@
 }
 
 .chest-image {
-  // Dynamic properties set by JavaScript - no hardcoded values
-  width: var(--chest-width, 600px);
-  margin-left: var(--chest-margin-x, 10rem);
-  margin-top: var(--chest-margin-y, 10rem);
+  // JavaScript sets width dynamically once at initialization
   height: auto;
   max-width: none; // Prevent scaling from global img rule
   image-rendering: -webkit-optimize-contrast;
@@ -19,19 +16,8 @@
   image-rendering: pixelated;
   display: block; // Ensure proper positioning
   visibility: hidden; // Hide the image, but particles will show its shape
-  
-  // No more media queries - everything is dynamic!
-}
-
-// Hidden reference image for particle sampling (never scales)
-.chest-reference-image {
-  position: absolute;
-  width: var(--chest-reference-width, 600px); // Dynamic reference width
-  height: auto;
-  max-width: none;
-  visibility: hidden;
-  pointer-events: none;
-  z-index: -1;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 // Particle canvas overlay (image particles)

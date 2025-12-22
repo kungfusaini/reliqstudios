@@ -8,135 +8,29 @@ class ParticleSystem {
     this.animationId = null;
     this.imageData = null;
     this.isProcessing = false;
-    this.dynamicScale = null;
     
-    // Validate viewport settings
-    this.validateViewportSettings();
+    // Calculate scale ONCE at initialization
+    this.scaleFactor = this.calculateInitialScale();
+    this.particleSize = this.config.size * Math.sqrt(this.scaleFactor);
+    this.spacing = this.particleSize / this.config.sizeToSpacingRatio;
     
-    // Create hidden reference image for consistent particle sampling
-    this.createReferenceImage();
-    
-    // Apply initial dynamic scaling
-    this.applyDynamicScaling();
     this.setupImageProcessing();
-    this.animate();
-    this.setupDynamicResize();
-  }
-  
-  validateViewportSettings() {
-    const viewportMeta = document.querySelector('meta[name="viewport"]');
-    if (!viewportMeta || !viewportMeta.content.includes('width=device-width')) {
-      // Particle system requires proper viewport meta tag for optimal scaling
-    }
-  }
-
-  createReferenceImage() {
-    this.referenceImage = new Image();
-    this.referenceImage.src = this.chestImage.src;
-    this.referenceImage.style.width = `${this.config.baseReferenceSize}px`;
-    this.referenceImage.style.height = 'auto';
-    this.referenceImage.style.visibility = 'hidden';
-    this.referenceImage.style.position = 'absolute';
-    this.referenceImage.style.zIndex = '-1';
-    document.body.appendChild(this.referenceImage);
-  }
-
-  calculateDynamicScale() {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const containerWidth = this.chestImage.parentElement.offsetWidth;
-    
-    // Calculate optimal image size based on viewport constraints
-    const maxImageWidth = viewportWidth * this.config.maxViewportUsage;
-    const minImageWidth = viewportWidth * this.config.minViewportUsage;
-    const targetImageWidth = Math.min(containerWidth, maxImageWidth, this.config.baseReferenceSize);
-    const finalImageWidth = Math.max(minImageWidth, targetImageWidth);
-    
-    // Calculate scaling factor from base reference
-    const scaleFactor = finalImageWidth / this.config.baseReferenceSize;
-    
-    // Dynamic particle size calculation based on scale and density requirements
-    const densityAdjustedSize = this.calculateOptimalParticleSize(scaleFactor);
-    const densityAdjustedSpacing = densityAdjustedSize / this.config.sizeToSpacingRatio;
-    
-    // Calculate dynamic margins
-    const margins = this.calculateDynamicMargins(scaleFactor);
-    
-    return {
-      imageWidth: finalImageWidth,
-      scaleFactor,
-      particleSize: densityAdjustedSize,
-      spacing: densityAdjustedSpacing,
-      margins
-    };
-  }
-
-  calculateOptimalParticleSize(scaleFactor) {
-    const baseSize = this.config.size;
-    
-    // Calculate size needed to maintain particle density
-    const densityAdjustedSize = baseSize * Math.sqrt(scaleFactor);
-    
-    // Apply viewport thresholds for gradual changes
-    const minScale = this.config.viewportThresholds.particleMinScale;
-    const maxScale = this.config.viewportThresholds.particleMaxScale;
-    
-    let finalSize = baseSize;
-    
-    if (scaleFactor < minScale) {
-      // Scale down gradually when below minimum scale
-      finalSize = baseSize * (1 - (minScale - scaleFactor) * 0.5);
-    } else if (scaleFactor > maxScale) {
-      // Scale up gradually when above maximum scale
-      finalSize = baseSize * (1 + (scaleFactor - maxScale) * 0.3);
-    } else {
-      // Within range, use density-adjusted size
-      finalSize = densityAdjustedSize;
-    }
-    
-    // Constrain within functional bounds
-    const constrainedSize = Math.max(
-      this.config.minParticleSize,
-      Math.min(this.config.maxParticleSize, finalSize)
-    );
-    
-    return constrainedSize;
-  }
-
-  calculateDynamicMargins(scaleFactor) {
-    // Calculate margins as viewport percentages, not fixed rem values
-    const baseMarginVW = Math.min(15, 8 / scaleFactor); // Viewport width percentage
-    const baseMarginVH = Math.min(20, 12 / scaleFactor); // Viewport height percentage
-    
-    return {
-      marginLeft: `${baseMarginVW}vw`,
-      marginTop: `${baseMarginVH}vh`
-    };
-  }
-
-  applyDynamicScaling() {
-    this.dynamicScale = this.calculateDynamicScale();
-    
-    // Apply CSS custom properties for dynamic styling
-    const root = document.documentElement;
-    root.style.setProperty('--chest-width', `${this.dynamicScale.imageWidth}px`);
-    root.style.setProperty('--chest-margin-x', this.dynamicScale.margins.marginLeft);
-    root.style.setProperty('--chest-margin-y', this.dynamicScale.margins.marginTop);
-    root.style.setProperty('--chest-reference-width', `${this.config.baseReferenceSize}px`);
-    
-    // Update image dimensions directly
-    this.chestImage.style.width = `${this.dynamicScale.imageWidth}px`;
-    this.chestImage.style.marginLeft = this.dynamicScale.margins.marginLeft;
-    this.chestImage.style.marginTop = this.dynamicScale.margins.marginTop;
-    
-    // Update config with dynamic values for particle calculations
-    this.config = {
-      ...window.particleConfig.chest,
-      size: this.dynamicScale.particleSize,
-      spacing: this.dynamicScale.spacing
-    };
-    
     this.resizeCanvas();
+    this.animate();
+  }
+
+  calculateInitialScale() {
+    // Scale small pixel art image to target size
+    const targetImageSize = this.config.targetImageSize;
+    
+    // Apply scaling to make image 600px wide
+    this.chestImage.style.width = `${targetImageSize}px`;
+    this.chestImage.style.marginLeft = 'auto';
+    this.chestImage.style.marginRight = 'auto';
+    this.chestImage.style.display = 'block';
+    
+    // Scale factor for particle sizing (always 1.0 since we use target size directly)
+    return 1.0;
   }
 
   resizeCanvas() {
@@ -145,80 +39,42 @@ class ParticleSystem {
     this.canvas.height = rect.height;
     this.canvas.style.width = `${rect.width}px`;
     this.canvas.style.height = `${rect.height}px`;
-    
-    // Calculate display scale for particle positioning
-    if (this.dynamicScale) {
-      this.displayScale = rect.width / this.config.baseReferenceSize;
-    }
   }
   
   setupImageProcessing() {
-    // Wait for reference image to be fully loaded and processed
-    if (this.referenceImage.complete) {
+    // Wait for image to be fully loaded
+    if (this.chestImage.complete) {
       this.processImageAndCreateParticles();
     } else {
-      this.referenceImage.addEventListener('load', () => {
+      this.chestImage.addEventListener('load', () => {
         this.processImageAndCreateParticles();
       });
       
-      this.referenceImage.addEventListener('error', () => {
-        // Reference image failed to load
+      this.chestImage.addEventListener('error', () => {
+        console.error('Failed to load chest image');
       });
     }
   }
-  
-  // Public method to update particles when chest frame changes
-  updateFromNewFrame() {
-    if (!this.isProcessing) {
-      // Update reference image source
-      this.referenceImage.src = this.chestImage.src;
-      this.referenceImage.onload = () => {
-        this.applyDynamicScaling(); // Reapply scaling with new image
-        this.processImageAndCreateParticles();
-      };
-    }
-  }
-  
-  setupDynamicResize() {
-    let resizeTimeout;
-    
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        this.applyDynamicScaling();
-        if (!this.isProcessing) {
-          this.processImageAndCreateParticles();
-        }
-      }, 100); // Debounced for performance
-    };
-    
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-  }
-  
-
-  
+   
   processImageAndCreateParticles() {
     this.isProcessing = true;
     
-    // Always sample from the base reference size image
-    const referenceSize = this.config.baseReferenceSize;
-    const aspectRatio = this.referenceImage.naturalHeight / this.referenceImage.naturalWidth;
-    const referenceHeight = referenceSize * aspectRatio;
-    
-    // Create temporary canvas at reference size for consistent sampling
+    // Create temporary canvas for image processing
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
-    tempCanvas.width = referenceSize;
-    tempCanvas.height = referenceHeight;
     
-    // Draw the reference image at base reference size
-    tempCtx.drawImage(this.referenceImage, 0, 0, referenceSize, referenceHeight);
+    // Use the scaled image dimensions for processing
+    const rect = this.chestImage.getBoundingClientRect();
+    tempCanvas.width = rect.width;
+    tempCanvas.height = rect.height;
     
-    // Get image data from reference
-    this.imageData = tempCtx.getImageData(0, 0, referenceSize, referenceHeight);
+    // Draw the image at current display size
+    tempCtx.drawImage(this.chestImage, 0, 0, rect.width, rect.height);
     
-    // Create particles based on reference image
+    // Get image data
+    this.imageData = tempCtx.getImageData(0, 0, rect.width, rect.height);
+    
+    // Create particles based on image
     this.createParticlesFromImage();
     this.isProcessing = false;
   }
@@ -226,20 +82,18 @@ class ParticleSystem {
   createParticlesFromImage() {
     this.particles = [];
     const data = this.imageData.data;
-    const referenceWidth = this.imageData.width; // Always base reference size
-    const referenceHeight = this.imageData.height;
+    const width = this.imageData.width;
+    const height = this.imageData.height;
     
-    // Use integer step for pixel sampling - round to nearest integer
-    const step = Math.max(1, Math.round(this.config.spacing));
+    // Use integer step for pixel sampling
+    const step = Math.max(1, Math.round(this.spacing));
     
-    for (let y = 0; y < referenceHeight; y += step) {
-      for (let x = 0; x < referenceWidth; x += step) {
-        // Ensure integer coordinates for pixel array access
+    for (let y = 0; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
         const pixelX = Math.floor(x);
         const pixelY = Math.floor(y);
-        const index = (pixelY * referenceWidth + pixelX) * 4;
+        const index = (pixelY * width + pixelX) * 4;
         
-        // Bounds check
         if (index < 0 || index >= data.length - 3) continue;
         
         const r = data[index];
@@ -247,54 +101,28 @@ class ParticleSystem {
         const b = data[index + 2];
         const a = data[index + 3];
         
-        // More restrictive filtering - higher alpha threshold and darker pixels
+        // Filter for dark, visible pixels
         if (a > this.config.alphaThreshold && (r < this.config.colorThreshold || g < this.config.colorThreshold || b < this.config.colorThreshold)) {
-          // Store reference coordinates but scale for display
-          const displayX = pixelX * this.displayScale;
-          const displayY = pixelY * this.displayScale;
-          
           this.particles.push({
-            x: displayX, // Scaled display position
-            y: displayY, // Scaled display position
-            originalX: displayX, // Original display position
-            originalY: displayY,
+            x: pixelX,
+            y: pixelY,
+            originalX: pixelX,
+            originalY: pixelY,
             vx: (Math.random() - 0.5) * 0.2,
             vy: (Math.random() - 0.5) * 0.2,
-            size: Math.max(2, this.config.size * this.displayScale), // Updated min size
+            size: Math.max(2, this.particleSize),
             opacity: this.config.opacity + Math.random() * 0.2,
             color: `rgba(${r}, ${g}, ${b}, 1)`,
-            jitter: Math.random() * this.config.jitter * this.displayScale
+            jitter: Math.random() * this.config.jitter
           });
         }
       }
     }
-    
-    // Background particles now handled by BackgroundParticleSystem
-    // No need to create background particles here
   }
-  
-
-  
+   
   updateParticles() {
     this.particles.forEach(particle => {
-      // Spring force to return to original position
-      const dx = particle.originalX - particle.x;
-      const dy = particle.originalY - particle.y;
-      
-      particle.vx += dx * 0.02; // Spring strength
-      particle.vy += dy * 0.02;
-      
-      // Damping
-      particle.vx *= 0.95;
-      particle.vy *= 0.95;
-      
-      // Add subtle jittering
-      particle.x += particle.vx + (Math.random() - 0.5) * particle.jitter;
-      particle.y += particle.vy + (Math.random() - 0.5) * particle.jitter;
-      
-      // Subtle opacity pulsing
-      particle.opacity += (Math.random() - 0.5) * 0.01;
-      particle.opacity = Math.max(0.6, Math.min(1, particle.opacity));
+      ParticlePhysics.updateParticle(particle);
     });
   }
   
@@ -302,14 +130,7 @@ class ParticleSystem {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.particles.forEach(particle => {
-      // Skip particles that are too small to be visible
-      if (particle.size < 1) return;
-      
-      // Set particle color from original image pixel
-      this.ctx.fillStyle = particle.color.replace('1)', `${particle.opacity})`);
-      this.ctx.beginPath();
-      this.ctx.arc(particle.x, particle.y, particle.size / 2, 0, Math.PI * 2);
-      this.ctx.fill();
+      ParticlePhysics.drawParticle(this.ctx, particle);
     });
   }
   
@@ -324,16 +145,10 @@ class ParticleSystem {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
-    window.removeEventListener('resize', this.resizeCanvas);
-    
-    // Clean up reference image
-    if (this.referenceImage && this.referenceImage.parentNode) {
-      this.referenceImage.parentNode.removeChild(this.referenceImage);
-    }
   }
 }
 
-// Initialize when DOM is ready and after chest animation is set up
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const chestImage = document.querySelector('.chest-image');
   const chestContainer = document.querySelector('.chest-container');
@@ -348,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
-    canvas.style.pointerEvents = 'none'; // No interaction needed for image particles
-    canvas.style.zIndex = '5'; // Above background but below content
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '5';
     
     // Position canvas over the chest container
     chestContainer.appendChild(canvas);
