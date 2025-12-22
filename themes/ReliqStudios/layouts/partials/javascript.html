@@ -1,12 +1,8 @@
 {{ $main := resources.Get "js/main.js" }}
-{{ $chest := resources.Get "js/chest-animation.js" }}
-{{ $config := resources.Get "js/particle-config.js" }}
-{{ $physics := resources.Get "js/particle-physics.js" }}
-{{ $particles := resources.Get "js/particle-system.js" }}
-{{ $bgParticles := resources.Get "js/background-particles.js" }}
+{{ $particleImage := resources.Get "js/particle-image.min.js" }}
 {{ $menu := resources.Get "js/menu.js" }}
 {{ $prism := resources.Get "js/prism.js" }}
-{{ $secureJS := slice $main $chest $config $physics $particles $bgParticles $menu $prism | resources.Concat "bundle.js" | resources.Minify | resources.Fingerprint "sha512" }}
+{{ $secureJS := slice $main $particleImage $menu $prism | resources.Concat "bundle.js" | resources.Minify | resources.Fingerprint "sha512" }}
 <script type="text/javascript" src="{{ $secureJS.RelPermalink }}" integrity="{{ $secureJS.Data.Integrity }}"></script>
 
 {{ range $val := $.Site.Params.customJS }}
