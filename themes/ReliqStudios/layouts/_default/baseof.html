@@ -6,18 +6,18 @@
 
     {{ block "body" . }}
         <body>
+            <div id="particle-image" data-params-src="/js/particle-params.json"></div>
+            <div class="container">
+                {{ partial "header.html" . }}
+
+                {{ block "main" . }}{{ end }}
+
+                {{ block "footer" . }}
+                    {{ partial "footer.html" . }}
+                {{ end }}
+            </div>
+
+            {{ partial "javascript.html" . }}
     {{ end }}
-    
-        <div class="container">
-            {{ partial "header.html" . }}
-
-            {{ block "main" . }}{{ end }}
-
-            {{ block "footer" . }}
-                {{ partial "footer.html" . }}
-            {{ end }}
-        </div>
-
-        {{ partial "javascript.html" . }}
     </body>
 </html>

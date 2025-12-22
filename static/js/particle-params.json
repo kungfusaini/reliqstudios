@@ -34,9 +34,9 @@
       "is_external": false
     },
     "size": {
-      "canvas_pct": 50,
-      "min_px": 150,
-      "max_px": 600
+      "canvas_pct": 90,
+      "min_px": 200,
+      "max_px": 2000
     }
   },
   "interactions": {

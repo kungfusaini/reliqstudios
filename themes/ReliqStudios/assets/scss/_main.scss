@@ -251,8 +251,10 @@ ol ol {
   flex: 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 .content-center {
