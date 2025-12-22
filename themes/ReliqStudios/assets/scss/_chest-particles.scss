@@ -3,24 +3,35 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 2rem 0;
+  margin: clamp(1rem, 4vw, 3rem) 0; // Fluid margins
   position: relative; // Needed for canvas overlay
 }
 
 .chest-image {
-  margin-left: 10rem;
-  margin-top: 10rem;
-  width: 600px;
+  // Dynamic properties set by JavaScript - no hardcoded values
+  width: var(--chest-width, 600px);
+  margin-left: var(--chest-margin-x, 10rem);
+  margin-top: var(--chest-margin-y, 10rem);
   height: auto;
+  max-width: none; // Prevent scaling from global img rule
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   display: block; // Ensure proper positioning
   visibility: hidden; // Hide the image, but particles will show its shape
   
-  @media #{$media-size-phone} {
-    width: 300px;
-  }
+  // No more media queries - everything is dynamic!
+}
+
+// Hidden reference image for particle sampling (never scales)
+.chest-reference-image {
+  position: absolute;
+  width: var(--chest-reference-width, 600px); // Dynamic reference width
+  height: auto;
+  max-width: none;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
 }
 
 // Particle canvas overlay (image particles)
