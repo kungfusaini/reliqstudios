@@ -201,13 +201,21 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   =          PARTICLE FUNCTIONS          =
   ========================================
   */
-  pImg.functions.particles.SingleImageParticle = function(init_xy, dest_xy) {
+  pImg.functions.particles.SingleImageParticle = function(init_xy, dest_xy, start_stationary = false) {
     this.x = init_xy.x;
     this.y = init_xy.y;
     this.dest_x = dest_xy.x;
     this.dest_y = dest_xy.y;
-    this.vx = (Math.random() - 0.5) * pImg.particles.movement.speed;
-    this.vy = (Math.random() - 0.5) * pImg.particles.movement.speed;
+    
+    // Set initial velocity based on whether particle should start stationary
+    if (start_stationary) {
+      this.vx = 0;
+      this.vy = 0;
+    } else {
+      this.vx = (Math.random() - 0.5) * pImg.particles.movement.speed;
+      this.vy = (Math.random() - 0.5) * pImg.particles.movement.speed;
+    }
+    
     this.acc_x = 0;
     this.acc_y = 0;
     this.friction = Math.random() * 0.01 + 0.92;
@@ -243,8 +251,21 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
       for (let j = 0; j < pixel_data.height; j += increment) {
         if (pixel_data.data[(i + j * pixel_data.width) * 4 + 3] > 128) {
           const dest_xy = {x: pImg.image.x + i, y: pImg.image.y + j};
-          const init_xy = at_dest ? dest_xy : {x: Math.random() * pImg.canvas.w, y: Math.random() * pImg.canvas.h};
-          pImg.particles.array.push(new pImg.functions.particles.SingleImageParticle(init_xy, dest_xy));
+          let init_xy;
+          
+          // Check if particles should start scrambled or at destination
+          let start_stationary = false;
+          if (at_dest || !pImg.particles.start_scrambled) {
+            // Start at destination (either explicitly requested or scramble disabled)
+            init_xy = dest_xy;
+            start_stationary = true; // Start with zero velocity
+          } else {
+            // Start scrambled at random positions
+            init_xy = {x: Math.random() * pImg.canvas.w, y: Math.random() * pImg.canvas.h};
+            start_stationary = false;
+          }
+          
+          pImg.particles.array.push(new pImg.functions.particles.SingleImageParticle(init_xy, dest_xy, start_stationary));
         }
       }
     }

@@ -2,6 +2,7 @@
   "particles": {
     
     "color": "#3c3836",
+    "start_scrambled": false,
     "responsive": {
       "enabled": true,
       "size": {
