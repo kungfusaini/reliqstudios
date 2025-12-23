@@ -21,10 +21,10 @@
       }
     },
     "movement": {
-      "speed": 1,
+      "speed": 10,
       "restless": {
         "enabled": true,
-        "value": 10
+        "value": 1000
       }
     },
     "interactivity": {
@@ -61,8 +61,10 @@
   },
   "interactions": {
     "repulse": {
-      "distance": 100,
-      "strength": 200
+      "detection_radius": 40,
+      "max_displacement": 1,
+      "repulse_duration": 0.1,
+      "force_curve": "linear"
     },
     "big_repulse": {
       "distance": 100,

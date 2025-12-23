@@ -335,17 +335,60 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   =        INTERACTIVITY FUNCTIONS       =
   ========================================
   */
-  pImg.functions.interactivity.repulseParticle = function(p, args) {
+pImg.functions.interactivity.repulseParticle = function(p, args) {
     // compute distance to mouse
     const dx_mouse = p.x - pImg.mouse.x,
           dy_mouse = p.y - pImg.mouse.y,
-          mouse_dist = Math.sqrt(dx_mouse * dx_mouse + dy_mouse * dy_mouse),
-          inv_strength = pImg.functions.utils.clamp(300 - args.strength, 10, 300);
-    if (mouse_dist <= args.distance) {
-      p.acc_x = (p.x - pImg.mouse.x) / inv_strength;
-      p.acc_y = (p.y - pImg.mouse.y) / inv_strength;
-      p.vx += p.acc_x;
-      p.vy += p.acc_y;
+          mouse_dist = Math.sqrt(dx_mouse * dx_mouse + dy_mouse * dy_mouse);
+    
+    if (mouse_dist <= args.detection_radius) {
+      // Calculate displacement from destination
+      const dx_dest = p.x - p.dest_x;
+      const dy_dest = p.y - p.dest_y;
+      const current_displacement = Math.sqrt(dx_dest * dx_dest + dy_dest * dy_dest);
+      
+      // Check displacement constraint
+      if (current_displacement < args.max_displacement) {
+        // Initialize repulse timer if not started
+        if (!p.repulse_start_time) {
+          p.repulse_start_time = Date.now();
+        }
+        
+        // Calculate elapsed time as fraction of repulse duration
+        const elapsed_ms = Date.now() - p.repulse_start_time;
+        const elapsed_fraction = Math.min(elapsed_ms / (args.repulse_duration * 1000), 1);
+        
+        // Calculate force multiplier based on selected curve
+        let force_multiplier;
+        switch (args.force_curve) {
+          case 'top_heavy':
+            force_multiplier = 1 - (1 - elapsed_fraction) ** 2;
+            break;
+          case 'bottom_heavy':
+            force_multiplier = elapsed_fraction ** 2;
+            break;
+          case 'linear':
+          default:
+            force_multiplier = elapsed_fraction;
+            break;
+        }
+        
+        // Calculate required acceleration from physics: a = 2 * d / t^2
+        const required_acceleration = (2 * args.max_displacement) / (args.repulse_duration ** 2);
+        
+        // Apply displacement constraint factor
+        const constraint_factor = Math.max(0, 1 - (current_displacement / args.max_displacement));
+        
+        // Calculate and apply force
+        const force = required_acceleration * force_multiplier * constraint_factor;
+        p.acc_x = ((p.x - pImg.mouse.x) / mouse_dist) * force * 0.01;
+        p.acc_y = ((p.y - pImg.mouse.y) / mouse_dist) * force * 0.01;
+        p.vx += p.acc_x;
+        p.vy += p.acc_y;
+      }
+    } else {
+      // Reset timer when mouse leaves
+      p.repulse_start_time = null;
     }
   };
 
