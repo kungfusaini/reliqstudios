@@ -48,6 +48,12 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
         path: null,
         is_external: false
       },
+      position: {
+        x_percent: 0,
+        y_percent: 0,
+        x_offset: 0,
+        y_offset: 0
+      },
       size: {
         canvas_pct: 60,
         min_px: 50,
@@ -154,9 +160,24 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
       pImg.image.obj.width = pImg.functions.utils.clamp(Math.round(pImg.canvas.w * pImg.image.size.canvas_pct / 100), pImg.image.size.min_px, pImg.image.size.max_px);
       pImg.image.obj.height = Math.round(pImg.image.obj.width / pImg.image.aspect_ratio);
     }
-    // set x,y coords to center image on canvas
-    pImg.image.x = pImg.canvas.w  / 2 - pImg.image.obj.width / 2;
-    pImg.image.y = pImg.canvas.h / 2 - pImg.image.obj.height / 2;
+    // set x,y coords to center image on canvas with responsive positioning
+    let x_offset = 0, y_offset = 0;
+    
+    // Use percentage-based positioning if available (responsive)
+    if (pImg.image.position.x_percent !== undefined) {
+      x_offset = pImg.canvas.w * pImg.image.position.x_percent;
+    } else if (pImg.image.position.x_offset !== undefined) {
+      x_offset = pImg.image.position.x_offset; // Fallback to pixel offsets
+    }
+    
+    if (pImg.image.position.y_percent !== undefined) {
+      y_offset = pImg.canvas.h * pImg.image.position.y_percent;
+    } else if (pImg.image.position.y_offset !== undefined) {
+      y_offset = pImg.image.position.y_offset; // Fallback to pixel offsets
+    }
+    
+    pImg.image.x = pImg.canvas.w  / 2 - pImg.image.obj.width / 2 + x_offset;
+    pImg.image.y = pImg.canvas.h / 2 - pImg.image.obj.height / 2 + y_offset;
   };
 
   pImg.functions.image.init = function() {

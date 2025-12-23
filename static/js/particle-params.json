@@ -47,6 +47,12 @@
       "path": "/chest/test.png",
       "is_external": false
     },
+    "position": {
+      "x_percent": -0.05,
+      "y_percent": -0.15,
+      "x_offset": 0,
+      "y_offset": 0
+    },
     "size": {
       "canvas_pct": 90,
       "min_px": 200,
