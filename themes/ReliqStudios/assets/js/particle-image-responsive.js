@@ -3,6 +3,7 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   this.pImageConfig = {
     particles: {
       array: [],
+      secondary_array: [],
       density: 100,
       color: '#fff',
       size: {
@@ -79,12 +80,13 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
       w: canvas_el.offsetWidth,
       h: canvas_el.offsetHeight
     },
-    functions: {
+functions: {
       particles: {},
       image: {},
       canvas: {},
       interactivity: {},
-      utils: {}
+      utils: {},
+      config: {}
     },
     mouse: {
       x: null,
@@ -97,6 +99,22 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   const pImg = this.pImageConfig;
   if (params) {
     Object.deepExtend(pImg, params);
+  }
+  
+  // Initialize secondary particle system
+  if (params && params.secondary_particles && params.secondary_particles.enabled) {
+    console.log('Initializing secondary particles with config:', params.secondary_particles);
+    const mergedConfig = window.mergeSecondaryConfig(
+      pImg.particles, 
+      params.secondary_particles
+    );
+    // Store enabled status in merged config
+    mergedConfig.enabled = true;
+    pImg.secondary_particles_config = mergedConfig;
+    console.log('Merged secondary config:', pImg.secondary_particles_config);
+  } else {
+    console.log('Secondary particles disabled');
+    pImg.secondary_particles_config = null;
   }
 
   /*
@@ -183,13 +201,41 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   pImg.functions.image.init = function() {
     pImg.image.obj = new Image();
     pImg.image.obj.addEventListener('load', function() {
+      console.log('Image loaded successfully:', pImg.image.src.path);
       // get aspect ratio (only have to compute once on initial load)
       pImg.image.aspect_ratio = pImg.image.obj.width / pImg.image.obj.height;
       pImg.functions.image.resize();
       const img_pixels = pImg.functions.canvas.getImagePixels();
       pImg.functions.particles.createImageParticles(img_pixels);
+      
+      // Initialize secondary particles if enabled
+      if (pImg.secondary_particles_config) {
+        console.log('Creating secondary particles...');
+        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+          pImg.secondary_particles_config
+        );
+        console.log('Created secondary particles count:', pImg.particles.secondary_array.length);
+      } else {
+        console.log('No secondary particles config found');
+      }
+      
       pImg.functions.particles.animateParticles();
     });
+    
+    pImg.image.obj.addEventListener('error', function() {
+      console.error('Failed to load image:', pImg.image.src.path);
+      console.error('Image load error - secondary particles will not be created');
+      // Still create secondary particles if configured
+      if (pImg.secondary_particles_config) {
+        console.log('Creating secondary particles without image...');
+        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+          pImg.secondary_particles_config
+        );
+        console.log('Created secondary particles count:', pImg.particles.secondary_array.length);
+        pImg.functions.particles.animateParticles();
+      }
+    });
+    
     pImg.image.obj.src = pImg.image.src.path;
     if (pImg.image.src.is_external) {
       pImg.image.obj.crossOrigin = "anonymous";
@@ -202,38 +248,56 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   ========================================
   */
   pImg.functions.particles.SingleImageParticle = function(init_xy, dest_xy, start_stationary = false) {
-    this.x = init_xy.x;
-    this.y = init_xy.y;
-    this.dest_x = dest_xy.x;
-    this.dest_y = dest_xy.y;
+    // Defensive checks for required parameters
+    if (!init_xy || !dest_xy) {
+      console.error('SingleImageParticle: Missing init_xy or dest_xy parameters', { init_xy, dest_xy });
+      return;
+    }
+    
+    this.x = init_xy.x || 0;
+    this.y = init_xy.y || 0;
+    this.dest_x = dest_xy.x || 0;
+    this.dest_y = dest_xy.y || 0;
     
     // Set initial velocity based on whether particle should start stationary
     if (start_stationary) {
       this.vx = 0;
       this.vy = 0;
     } else {
-      this.vx = (Math.random() - 0.5) * pImg.particles.movement.speed;
-      this.vy = (Math.random() - 0.5) * pImg.particles.movement.speed;
+      this.vx = (Math.random() - 0.5) * (pImg.particles.movement?.speed || 1);
+      this.vy = (Math.random() - 0.5) * (pImg.particles.movement?.speed || 1);
     }
     
     this.acc_x = 0;
     this.acc_y = 0;
     this.friction = Math.random() * 0.01 + 0.92;
     this.restlessness = {
-      max_displacement: Math.ceil(Math.random() * pImg.particles.movement.restless.value),
-      x_jitter: pImg.functions.utils.randIntInRange(-3, 3),
-      y_jitter: pImg.functions.utils.randIntInRange(-3, 3),
+      max_displacement: Math.ceil(Math.random() * (pImg.particles.movement?.restless?.value || 10)),
+      x_jitter: Math.floor(Math.random() * 7) - 3, // -3 to 3
+      y_jitter: Math.floor(Math.random() * 7) - 3, // -3 to 3
       on_curr_frame: false
     };
-    if (pImg.particles.color instanceof Array) {
-      this.color = pImg.particles.color[Math.floor(Math.random() * (pImg.particles.color.length + 1))];
-    } else {
-      this.color = pImg.particles.color;
+    
+    // Safe color assignment
+    try {
+      if (Array.isArray(pImg.particles.color)) {
+        this.color = pImg.particles.color[Math.floor(Math.random() * pImg.particles.color.length)];
+      } else {
+        this.color = pImg.particles.color || '#ffffff';
+      }
+    } catch (e) {
+      console.error('Error setting particle color:', e);
+      this.color = '#ffffff';
     }
     
-    // Use responsive sizing
-    const responsiveSize = pImg.functions.utils.calculateResponsiveSize();
-    this.radius = Math.round((pImg.particles.size.random ? Math.max(Math.random(), 0.5) : 1) * responsiveSize);
+    // Use responsive sizing with fallback
+    try {
+      const responsiveSize = pImg.functions.utils.calculateResponsiveSize();
+      this.radius = Math.round(((pImg.particles.size?.random) ? Math.max(Math.random(), 0.5) : 1) * responsiveSize);
+    } catch (e) {
+      console.error('Error calculating particle size:', e);
+      this.radius = 2;
+    }
     this.targetRadius = this.radius;
   };
 
@@ -244,34 +308,231 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
     pImg.canvas.context.fill();
   };
 
-  pImg.functions.particles.createImageParticles = function(pixel_data, at_dest = false) {
-    const responsiveDensity = pImg.functions.utils.calculateResponsiveDensity();
-    const increment = Math.round(pixel_data.width / responsiveDensity);
-    for (let i = 0; i < pixel_data.width; i += increment) {
-      for (let j = 0; j < pixel_data.height; j += increment) {
-        if (pixel_data.data[(i + j * pixel_data.width) * 4 + 3] > 128) {
-          const dest_xy = {x: pImg.image.x + i, y: pImg.image.y + j};
-          let init_xy;
-          
-          // Check if particles should start scrambled or at destination
-          let start_stationary = false;
-          if (at_dest || !pImg.particles.start_scrambled) {
-            // Start at destination (either explicitly requested or scramble disabled)
-            init_xy = dest_xy;
-            start_stationary = true; // Start with zero velocity
-          } else {
-            // Start scrambled at random positions
-            init_xy = {x: Math.random() * pImg.canvas.w, y: Math.random() * pImg.canvas.h};
-            start_stationary = false;
-          }
-          
-          pImg.particles.array.push(new pImg.functions.particles.SingleImageParticle(init_xy, dest_xy, start_stationary));
+  /*
+  ========================================
+  =       SECONDARY PARTICLE CLASS      =
+  ========================================
+  */
+  pImg.functions.particles.SecondaryParticle = function(x, y, config) {
+    this.x = x;
+    this.y = y;
+    // Secondary particles have no destination - they stay in place
+    this.dest_x = x;
+    this.dest_y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.acc_x = 0;
+    this.acc_y = 0;
+    this.friction = Math.random() * 0.01 + 0.92;
+    this.restlessness = {
+      max_displacement: Math.ceil(Math.random() * (pImg.particles.movement?.restless?.value || 10)),
+      x_jitter: Math.floor(Math.random() * 7) - 3, // -3 to 3
+      y_jitter: Math.floor(Math.random() * 7) - 3, // -3 to 3
+      on_curr_frame: false
+    };
+    this.color = config.color;
+    
+    // Use responsive sizing from merged config
+    const responsiveSize = pImg.functions.utils.calculateResponsiveSize();
+    this.radius = Math.round((config.size.random ? Math.max(Math.random(), 0.5) : 1) * responsiveSize);
+    this.targetRadius = this.radius;
+  };
+
+  pImg.functions.particles.SecondaryParticle.prototype.draw = function() {
+    pImg.canvas.context.fillStyle = this.color;
+    pImg.canvas.context.beginPath();
+    pImg.canvas.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    pImg.canvas.context.fill();
+  };
+
+  /*
+  ========================================
+  =    CONFIGURATION INHERITANCE       =
+  ========================================
+  */
+  pImg.functions.config.mergeSecondaryConfig = function(primary, secondary) {
+    // Default inheritance unless explicitly disabled
+    const shouldInherit = secondary.inherit_from_primary !== false;
+    
+    if (!shouldInherit) {
+      console.log('Secondary particles configured to not inherit from primary');
+      return secondary;
+    }
+    
+    // Deep clone primary config as base
+    const merged = JSON.parse(JSON.stringify(primary));
+    
+    // Apply secondary overrides only where explicitly defined
+    for (let [key, value] of Object.entries(secondary)) {
+      // Skip meta fields
+      if (key === 'enabled' || key === 'inherit_from_primary') {
+        continue;
+      }
+      
+      // Only override if secondary has a non-undefined value
+      if (value !== undefined && value !== null) {
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          // Deep merge objects
+          merged[key] = Object.deepExtend(merged[key] || {}, value);
+        } else {
+          // Direct value override
+          merged[key] = value;
         }
       }
     }
+    
+    return merged;
+  };
+
+  /*
+  ========================================
+  =     SECONDARY PARTICLE CREATION     =
+  ========================================
+  */
+  pImg.functions.particles.createSecondaryParticles = function(config) {
+    console.log('createSecondaryParticles called with config:', config);
+    
+    if (!config.enabled) {
+      console.log('Secondary particles disabled in createSecondaryParticles');
+      return [];
+    }
+
+    const particles = [];
+    const placementConfig = config.placement || {};
+
+    console.log('Placement mode:', config.placement_mode);
+
+    switch (config.placement_mode) {
+      case 'grid': {
+        console.log('Creating grid particles...');
+        const gridParticles = pImg.functions.particles.createGridParticles(config, placementConfig);
+        particles.push(...gridParticles);
+        console.log('Grid particles result:', gridParticles.length);
+        break;
+      }
+      case 'random': {
+        console.log('Creating random particles...');
+        const randomParticles = pImg.functions.particles.createRandomParticles(config, placementConfig);
+        particles.push(...randomParticles);
+        console.log('Random particles result:', randomParticles.length);
+        break;
+      }
+      default: {
+        console.warn(`Unknown placement_mode: ${config.placement_mode}, using grid`);
+        const defaultParticles = pImg.functions.particles.createGridParticles(config, placementConfig);
+        particles.push(...defaultParticles);
+        break;
+      }
+    }
+
+    console.log('Total secondary particles created:', particles.length);
+    return particles;
+  };
+
+  pImg.functions.particles.createGridParticles = function(config, placementConfig) {
+    const particles = [];
+    const spacing = placementConfig.grid_spacing || 20;
+    
+    console.log('Creating grid particles - Canvas:', pImg.canvas.w, 'x', pImg.canvas.h, 'Spacing:', spacing);
+    
+    const cols = Math.floor(pImg.canvas.w / spacing);
+    const rows = Math.floor(pImg.canvas.h / spacing);
+    
+    console.log('Grid dimensions:', cols, 'columns x', rows, 'rows');
+    
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        const x = (i + 0.5) * spacing;
+        const y = (j + 0.5) * spacing;
+        particles.push(new pImg.functions.particles.SecondaryParticle(x, y, config));
+      }
+    }
+    
+    console.log('Grid particles created:', particles.length);
+    return particles;
+  };
+
+  pImg.functions.particles.createRandomParticles = function(config, placementConfig) {
+    const particles = [];
+    const density = pImg.functions.utils.calculateResponsiveDensity();
+    const margin = placementConfig.random_margin || 50;
+    const minSpacing = 10; // Minimum distance between particles
+    
+    const particleCount = Math.floor(density * (pImg.canvas.w * pImg.canvas.h) / 10000);
+    
+    for (let i = 0; i < particleCount; i++) {
+      let x, y;
+      let attempts = 0;
+      
+      // Try to place particle without overlap
+      do {
+        x = margin + Math.random() * (pImg.canvas.w - 2 * margin);
+        y = margin + Math.random() * (pImg.canvas.h - 2 * margin);
+        attempts++;
+      } while (attempts < 50 && pImg.functions.particles.hasOverlap(x, y, particles, minSpacing));
+      
+      if (attempts < 50) {
+        particles.push(new pImg.functions.particles.SecondaryParticle(x, y, config));
+      }
+    }
+    
+    return particles;
+  };
+
+  pImg.functions.particles.hasOverlap = function(x, y, existingParticles, minSpacing) {
+    for (let p of existingParticles) {
+      const dist = Math.sqrt((x - p.x) ** 2 + (y - p.y) ** 2);
+      if (dist < minSpacing) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  pImg.functions.particles.createImageParticles = function(pixel_data, at_dest = false) {
+    // Defensive checks for pixel data
+    if (!pixel_data || !pixel_data.data || !pixel_data.width || !pixel_data.height) {
+      console.error('createImageParticles: Invalid pixel data', pixel_data);
+      return;
+    }
+    
+    const responsiveDensity = pImg.functions.utils.calculateResponsiveDensity();
+    const increment = Math.max(1, Math.round(pixel_data.width / responsiveDensity));
+    
+    console.log('Creating image particles - dimensions:', pixel_data.width, 'x', pixel_data.height, 'increment:', increment);
+    
+    for (let i = 0; i < pixel_data.width; i += increment) {
+      for (let j = 0; j < pixel_data.height; j += increment) {
+        const pixelIndex = (i + j * pixel_data.width) * 4 + 3; // Alpha channel
+        
+        // Check if pixel is within bounds and has sufficient opacity
+        if (pixelIndex < pixel_data.data.length && pixel_data.data[pixelIndex] > 128) {
+          const dest_xy = {x: (pImg.image?.x || 0) + i, y: (pImg.image?.y || 0) + j};
+          let init_xy;
+          
+          // Check if particles should start scrambled or at destination
+          if (at_dest || !pImg.particles?.start_scrambled) {
+            // Start at destination (either explicitly requested or scramble disabled)
+            init_xy = dest_xy;
+          } else {
+            // Start scrambled at random positions
+            init_xy = {x: Math.random() * (pImg.canvas?.w || 800), y: Math.random() * (pImg.canvas?.h || 600)};
+          }
+          
+          try {
+            pImg.particles.array.push(new pImg.functions.particles.SingleImageParticle(init_xy, dest_xy));
+          } catch (e) {
+            console.error('Error creating SingleImageParticle:', e, { init_xy, dest_xy });
+          }
+        }
+      }
+    }
+    
+    console.log('Created', pImg.particles.array.length, 'image particles');
   };
 
   pImg.functions.particles.updateParticles = function() {
+    // Update primary particles
     for (let p of pImg.particles.array) {
       if ((pImg.particles.movement.restless.enabled) && (p.restlessness.on_curr_frame)) {
         // if restless activity is enabled & particle is in restless mode, animate some random movement
@@ -293,44 +554,35 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
 
       pImg.functions.interactivity.interactWithClient(p);
     }
-  };
-
-  pImg.functions.particles.updateParticleSizes = function() {
-    const newSize = pImg.functions.utils.calculateResponsiveSize();
     
-    pImg.particles.array.forEach(particle => {
-      particle.targetRadius = Math.round(
-        (pImg.particles.size.random ? Math.max(Math.random(), 0.5) : 1) * newSize
-      );
-    });
-  };
-
-  pImg.functions.particles.updateParticleDensity = function() {
-    const newDensity = pImg.functions.utils.calculateResponsiveDensity();
-    
-    // Only update if density significantly changed (avoid constant regeneration)
-    if (Math.abs(pImg.currentDensity - newDensity) > 5) {
-      pImg.currentDensity = newDensity;
-      
-      // Store current particles positions
-      const currentPositions = pImg.particles.array.map(p => ({
-        x: p.x,
-        y: p.y,
-        dest_x: p.dest_x,
-        dest_y: p.dest_y
-      }));
-      
-      // Recreate particles with new density
-      pImg.particles.array = [];
-      const image_pixels = pImg.functions.canvas.getImagePixels();
-      pImg.functions.particles.createImageParticles(image_pixels, true);
-      
-      // Try to preserve some particle positions for smooth transition
-      const maxPreserved = Math.min(currentPositions.length, pImg.particles.array.length);
-      for (let i = 0; i < maxPreserved; i++) {
-        pImg.particles.array[i].x = currentPositions[i].x;
-        pImg.particles.array[i].y = currentPositions[i].y;
+    // Update secondary particles if enabled
+    if (pImg.secondary_particles_config && pImg.particles.secondary_array.length > 0) {
+      for (let p of pImg.particles.secondary_array) {
+        pImg.functions.particles.updateSecondaryParticle(p);
       }
+    }
+  };
+
+  pImg.functions.particles.updateSecondaryParticle = function(p) {
+    // Apply restless movement if enabled in inherited config
+    if ((pImg.secondary_particles_config.movement.restless.enabled) && (p.restlessness.on_curr_frame)) {
+      pImg.functions.particles.jitterParticle(p);
+    } else {
+      // Secondary particles don't have a destination to approach, just apply friction
+      p.vx *= p.friction;
+      p.vy *= p.friction;
+      p.x += p.vx;
+      p.y += p.vy;
+    }
+
+    // Smooth size transitions
+    if (Math.abs(p.radius - p.targetRadius) > 0.1) {
+      p.radius += (p.targetRadius - p.radius) * 0.1;
+    }
+
+    // Apply interactivity if enabled
+    if (pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
+      pImg.functions.interactivity.interactWithClient(p);
     }
   };
 
@@ -345,9 +597,36 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   pImg.functions.particles.animateParticles = function() {
     pImg.functions.canvas.clear()
     pImg.functions.particles.updateParticles();
-    for (let p of pImg.particles.array) {
-      p.draw();
+    
+    // Determine render order based on secondary particles configuration
+    const renderConfig = pImg.secondary_particles_config;
+    if (renderConfig && pImg.particles.secondary_array.length > 0) {
+      if (renderConfig.render_order === 'background') {
+        // Render secondary particles first (background)
+        for (let p of pImg.particles.secondary_array) {
+          p.draw();
+        }
+        // Then render primary particles (foreground)
+        for (let p of pImg.particles.array) {
+          p.draw();
+        }
+      } else {
+        // Render primary particles first (background)
+        for (let p of pImg.particles.array) {
+          p.draw();
+        }
+        // Then render secondary particles (foreground)
+        for (let p of pImg.particles.secondary_array) {
+          p.draw();
+        }
+      }
+    } else {
+      // Only primary particles
+      for (let p of pImg.particles.array) {
+        p.draw();
+      }
     }
+    
     requestAnimFrame(pImg.functions.particles.animateParticles);
   };
 
@@ -356,7 +635,7 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
   =        INTERACTIVITY FUNCTIONS       =
   ========================================
   */
-pImg.functions.interactivity.repulseParticle = function(p, args) {
+  pImg.functions.interactivity.repulseParticle = function(p, args) {
     // compute distance to mouse
     const dx_mouse = p.x - pImg.mouse.x,
           dy_mouse = p.y - pImg.mouse.y,
@@ -441,10 +720,42 @@ pImg.functions.interactivity.repulseParticle = function(p, args) {
   };
 
   pImg.functions.interactivity.addEventListeners = function() {
+    let needsMouseMove = false;
+    let needsMouseDown = false;
+    let needsTouchMove = false;
+    
+    // Check primary particles interactivity needs
     if (pImg.particles.interactivity.on_hover.enabled || pImg.particles.interactivity.on_click.enabled) {
+      needsMouseMove = true;
+      needsMouseDown = pImg.particles.interactivity.on_click.enabled;
+    }
+    if (pImg.particles.interactivity.on_touch.enabled) {
+      needsTouchMove = true;
+    }
+    
+    // Check secondary particles interactivity needs
+    if (pImg.secondary_particles_config && pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
+      const secondaryInteractivity = pImg.secondary_particles_config.interactivity;
+      const shouldInherit = secondaryInteractivity.inherit_repulse !== false;
+      
+      if (shouldInherit) {
+        // Secondary particles inherit primary interactivity needs
+        if (pImg.particles.interactivity.on_hover.enabled) needsMouseMove = true;
+        if (pImg.particles.interactivity.on_click.enabled) needsMouseDown = true;
+        if (pImg.particles.interactivity.on_touch.enabled) needsTouchMove = true;
+      } else {
+        // Check custom secondary interactivity
+        if (secondaryInteractivity.on_hover?.enabled) needsMouseMove = true;
+        if (secondaryInteractivity.on_click?.enabled) needsMouseDown = true;
+        if (secondaryInteractivity.on_touch?.enabled) needsTouchMove = true;
+      }
+    }
+    
+    // Setup universal mouse listeners
+    if (needsMouseMove) {
       pImg.canvas.el.addEventListener('mousemove', function(e) {
-        let pos_x = e.offsetX || e.clientX,
-            pos_y = e.offsetY || e.clientY;
+        const pos_x = e.offsetX || e.clientX;
+        const pos_y = e.offsetY || e.clientY;
         pImg.mouse.x = pos_x;
         pImg.mouse.y = pos_y;
       });
@@ -452,9 +763,9 @@ pImg.functions.interactivity.repulseParticle = function(p, args) {
         pImg.mouse.x = null;
         pImg.mouse.y = null;
       });
-      pImg.functions.utils.addEventActions('on_hover');
     }
-    if (pImg.particles.interactivity.on_click.enabled) {
+    
+    if (needsMouseDown) {
       pImg.canvas.el.addEventListener('mousedown', function(e) {
         pImg.mouse.click_x = pImg.mouse.x;
         pImg.mouse.click_y = pImg.mouse.y;
@@ -463,12 +774,12 @@ pImg.functions.interactivity.repulseParticle = function(p, args) {
         pImg.mouse.click_x = null;
         pImg.mouse.click_y = null;
       });
-      pImg.functions.utils.addEventActions('on_click');
     }
-    if (pImg.particles.interactivity.on_touch.enabled) {
+    
+    if (needsTouchMove) {
       pImg.canvas.el.addEventListener('touchmove', function(e) {
-        let pos_x = e.touches[0].clientX,
-            pos_y = e.touches[0].clientY;
+        const pos_x = e.touches[0].clientX;
+        const pos_y = e.touches[0].clientY;
         pImg.mouse.x = pos_x;
         pImg.mouse.y = pos_y;
       });
@@ -476,24 +787,75 @@ pImg.functions.interactivity.repulseParticle = function(p, args) {
         pImg.mouse.x = null;
         pImg.mouse.y = null;
       });
-      pImg.functions.utils.addEventActions('on_touch');
+    }
+    
+    // Setup event actions for primary particles
+    pImg.functions.utils.addEventActions('on_hover', pImg);
+    pImg.functions.utils.addEventActions('on_click', pImg);
+    pImg.functions.utils.addEventActions('on_touch', pImg);
+    
+    // Setup event actions for secondary particles if enabled
+    if (pImg.secondary_particles_config && pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
+      console.log('Setting up secondary particle interactivity');
+      
+      // Initialize fn_array if not exists
+      if (!pImg.secondary_particles_config.interactivity_fn_array) {
+        pImg.secondary_particles_config.interactivity_fn_array = [];
+      }
+      
+      // Only setup custom event actions if not inheriting from primary
+      if (pImg.secondary_particles_config.interactivity.inherit_repulse === false) {
+        pImg.functions.utils.addEventActions('on_hover', pImg.secondary_particles_config);
+        pImg.functions.utils.addEventActions('on_click', pImg.secondary_particles_config);
+        pImg.functions.utils.addEventActions('on_touch', pImg.secondary_particles_config);
+      }
     }
   };
 
   pImg.functions.interactivity.interactWithClient = function(p) {
-    for (let func of pImg.particles.interactivity.fn_array) {
-      func(p);
+    // Check if this is a secondary particle
+    const isSecondary = pImg.secondary_particles_config && 
+                      pImg.particles.secondary_array.includes(p);
+    
+    if (isSecondary) {
+      // Handle secondary particle interactivity
+      if (!pImg.secondary_particles_config.interactivity) {
+        return; // No interactivity configured for secondary particles
+      }
+      
+      if (!pImg.secondary_particles_config.interactivity.enabled) {
+        return; // Secondary particle interactivity explicitly disabled
+      }
+      
+      // Use secondary particle configuration
+      const interactivityConfig = pImg.secondary_particles_config.interactivity;
+      const shouldInherit = interactivityConfig.inherit_repulse !== false;
+      
+      if (shouldInherit) {
+        // Inherit primary particle interactivity
+        for (let func of pImg.particles.interactivity.fn_array) {
+          func(p, pImg.interactions[pImg.particles.interactivity.on_hover.action]);
+        }
+      } else {
+        // Use custom secondary particle interactivity
+        const secondaryFnArray = pImg.secondary_particles_config.interactivity_fn_array || [];
+        for (let func of secondaryFnArray) {
+          func(p, pImg.interactions[interactivityConfig.on_hover?.action || 'repulse']);
+        }
+      }
+    } else {
+      // Handle primary particle interactivity
+      for (let func of pImg.particles.interactivity.fn_array) {
+        func(p, pImg.interactions[pImg.particles.interactivity.on_hover.action]);
+      }
     }
   };
 
-  /*
+/*
   ========================================
-  =           UTILS FUNCTIONS            =
+  =    CONFIGURATION INHERITANCE       =
   ========================================
   */
-  pImg.functions.utils.randIntInRange = function(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  };
 
   pImg.functions.utils.clamp = function(n, min, max) {
     return Math.min(Math.max(n, min), max);
@@ -559,18 +921,30 @@ pImg.functions.interactivity.repulseParticle = function(p, args) {
     );
   };
   
-  pImg.functions.utils.addEventActions = function(event) {
+  pImg.functions.utils.addEventActions = function(event, config = pImg) {
     const action_funcs = {
       repulse: pImg.functions.interactivity.repulseParticle,
       big_repulse: pImg.functions.interactivity.repulseParticle,
       grab: pImg.functions.interactivity.grabParticle
     };
     let event_wrapper = event === 'on_click' ? pImg.functions.interactivity.onMouseClick : pImg.functions.interactivity.onMouseMove;
-    if (pImg.particles.interactivity[event].enabled) {
-      const func = action_funcs[pImg.particles.interactivity[event].action],
-            args = pImg.interactions[pImg.particles.interactivity[event].action];
-      const partial_func = event_wrapper.bind(null, func, args);
-      pImg.particles.interactivity.fn_array.push(partial_func);
+    
+    // Handle both primary and secondary particle configurations
+    const isPrimary = config === pImg;
+    const particlesConfig = isPrimary ? config.particles : config;
+    const interactionsConfig = isPrimary ? config.interactions : pImg.interactions;
+    const fnArrayTarget = isPrimary ? pImg.particles.interactivity.fn_array : config.interactivity_fn_array;
+    
+    // Defensive check for interactivity structure
+    if (particlesConfig && particlesConfig.interactivity && particlesConfig.interactivity[event] && particlesConfig.interactivity[event].enabled) {
+      const action = particlesConfig.interactivity[event].action;
+      const func = action_funcs[action];
+      const args = interactionsConfig[action];
+      
+      if (func && args) {
+        const partial_func = event_wrapper.bind(null, func, args);
+        fnArrayTarget.push(partial_func);
+      }
     }
   };
 
@@ -609,6 +983,8 @@ Object.deepExtend = function(destination, source) {
   return destination;
 };
 
+
+
 window.requestAnimFrame = (function() {
   return  window.requestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
@@ -624,8 +1000,8 @@ window.cancelRequestAnimFrame = (function() {
   return window.cancelAnimationFrame         ||
     window.webkitCancelRequestAnimationFrame ||
     window.mozCancelRequestAnimationFrame    ||
-    window.oCancelRequestAnimationFrame      ||
-    window.msCancelRequestAnimationFrame     ||
+    window.oRequestAnimationFrame      ||
+    window.msRequestAnimationFrame     ||
     clearTimeout
 })();
 
@@ -669,6 +1045,49 @@ window.particleImageDisplay = function(tag_id) {
     };
     xhr.send();
   }
+};
+
+// Global utility functions
+window.randIntInRange = function(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Global configuration merger for secondary particles
+window.mergeSecondaryConfig = function(primary, secondary) {
+  console.log('mergeSecondaryConfig called with primary:', primary, 'secondary:', secondary);
+  
+  // Default inheritance unless explicitly disabled
+  const shouldInherit = secondary.inherit_from_primary !== false;
+  
+  if (!shouldInherit) {
+    console.log('Secondary particles configured to not inherit from primary');
+    return secondary;
+  }
+  
+  // Deep clone primary config as base
+  const merged = JSON.parse(JSON.stringify(primary));
+  
+  // Apply secondary overrides only where explicitly defined
+  for (let [key, value] of Object.entries(secondary)) {
+    // Skip meta fields
+    if (key === 'enabled' || key === 'inherit_from_primary') {
+      continue;
+    }
+    
+    // Only override if secondary has a non-undefined value
+    if (value !== undefined && value !== null) {
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        // Deep merge objects
+        merged[key] = Object.deepExtend(merged[key] || {}, value);
+      } else {
+        // Direct value override
+        merged[key] = value;
+      }
+    }
+  }
+  
+  console.log('mergeSecondaryConfig returning:', merged);
+  return merged;
 };
 
 window.particleImageDisplay("particle-image");

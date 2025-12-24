@@ -76,5 +76,21 @@
       "line_width": 1
     }
   },
+
+  "secondary_particles": {
+    "enabled": true,
+    "inherit_from_primary": true,
+    "placement_mode": "grid",
+    "placement": {
+      "grid_spacing": 30
+    },
+    "color": "#928374",
+    "render_order": "background",
+    "interactivity": {
+      "enabled": true,
+      "inherit_repulse": true
+    }
+  },
+
   "disabled": false
 }
