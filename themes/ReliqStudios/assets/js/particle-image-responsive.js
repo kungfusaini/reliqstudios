@@ -103,7 +103,6 @@ functions: {
   
   // Initialize secondary particle system
   if (params && params.secondary_particles && params.secondary_particles.enabled) {
-    console.log('Initializing secondary particles with config:', params.secondary_particles);
     const mergedConfig = window.mergeSecondaryConfig(
       pImg.particles, 
       params.secondary_particles
@@ -111,9 +110,7 @@ functions: {
     // Store enabled status in merged config
     mergedConfig.enabled = true;
     pImg.secondary_particles_config = mergedConfig;
-    console.log('Merged secondary config:', pImg.secondary_particles_config);
   } else {
-    console.log('Secondary particles disabled');
     pImg.secondary_particles_config = null;
   }
 
@@ -201,7 +198,6 @@ functions: {
   pImg.functions.image.init = function() {
     pImg.image.obj = new Image();
     pImg.image.obj.addEventListener('load', function() {
-      console.log('Image loaded successfully:', pImg.image.src.path);
       // get aspect ratio (only have to compute once on initial load)
       pImg.image.aspect_ratio = pImg.image.obj.width / pImg.image.obj.height;
       pImg.functions.image.resize();
@@ -210,28 +206,40 @@ functions: {
       
       // Initialize secondary particles if enabled
       if (pImg.secondary_particles_config) {
-        console.log('Creating secondary particles...');
         pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
           pImg.secondary_particles_config
         );
-        console.log('Created secondary particles count:', pImg.particles.secondary_array.length);
-      } else {
-        console.log('No secondary particles config found');
       }
       
       pImg.functions.particles.animateParticles();
     });
     
     pImg.image.obj.addEventListener('error', function() {
-      console.error('Failed to load image:', pImg.image.src.path);
-      console.error('Image load error - secondary particles will not be created');
       // Still create secondary particles if configured
       if (pImg.secondary_particles_config) {
-        console.log('Creating secondary particles without image...');
         pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
           pImg.secondary_particles_config
         );
-        console.log('Created secondary particles count:', pImg.particles.secondary_array.length);
+        pImg.functions.particles.animateParticles();
+      }
+    });
+    
+    pImg.image.obj.addEventListener('error', function() {
+      // Still create secondary particles if configured
+      if (pImg.secondary_particles_config) {
+        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+          pImg.secondary_particles_config
+        );
+        pImg.functions.particles.animateParticles();
+      }
+    });
+    
+    pImg.image.obj.addEventListener('error', function() {
+      // Still create secondary particles if configured
+      if (pImg.secondary_particles_config) {
+        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+          pImg.secondary_particles_config
+        );
         pImg.functions.particles.animateParticles();
       }
     });
@@ -355,7 +363,6 @@ functions: {
     const shouldInherit = secondary.inherit_from_primary !== false;
     
     if (!shouldInherit) {
-      console.log('Secondary particles configured to not inherit from primary');
       return secondary;
     }
     
@@ -390,42 +397,31 @@ functions: {
   ========================================
   */
   pImg.functions.particles.createSecondaryParticles = function(config) {
-    console.log('createSecondaryParticles called with config:', config);
-    
     if (!config.enabled) {
-      console.log('Secondary particles disabled in createSecondaryParticles');
       return [];
     }
 
     const particles = [];
     const placementConfig = config.placement || {};
 
-    console.log('Placement mode:', config.placement_mode);
-
     switch (config.placement_mode) {
       case 'grid': {
-        console.log('Creating grid particles...');
         const gridParticles = pImg.functions.particles.createGridParticles(config, placementConfig);
         particles.push(...gridParticles);
-        console.log('Grid particles result:', gridParticles.length);
         break;
       }
       case 'random': {
-        console.log('Creating random particles...');
         const randomParticles = pImg.functions.particles.createRandomParticles(config, placementConfig);
         particles.push(...randomParticles);
-        console.log('Random particles result:', randomParticles.length);
         break;
       }
       default: {
-        console.warn(`Unknown placement_mode: ${config.placement_mode}, using grid`);
         const defaultParticles = pImg.functions.particles.createGridParticles(config, placementConfig);
         particles.push(...defaultParticles);
         break;
       }
     }
 
-    console.log('Total secondary particles created:', particles.length);
     return particles;
   };
 
@@ -433,12 +429,8 @@ functions: {
     const particles = [];
     const spacing = placementConfig.grid_spacing || 20;
     
-    console.log('Creating grid particles - Canvas:', pImg.canvas.w, 'x', pImg.canvas.h, 'Spacing:', spacing);
-    
     const cols = Math.floor(pImg.canvas.w / spacing);
     const rows = Math.floor(pImg.canvas.h / spacing);
-    
-    console.log('Grid dimensions:', cols, 'columns x', rows, 'rows');
     
     for (let i = 0; i < cols; i++) {
       for (let j = 0; j < rows; j++) {
@@ -448,7 +440,6 @@ functions: {
       }
     }
     
-    console.log('Grid particles created:', particles.length);
     return particles;
   };
 
@@ -499,7 +490,7 @@ functions: {
     const responsiveDensity = pImg.functions.utils.calculateResponsiveDensity();
     const increment = Math.max(1, Math.round(pixel_data.width / responsiveDensity));
     
-    console.log('Creating image particles - dimensions:', pixel_data.width, 'x', pixel_data.height, 'increment:', increment);
+
     
     for (let i = 0; i < pixel_data.width; i += increment) {
       for (let j = 0; j < pixel_data.height; j += increment) {
@@ -528,7 +519,7 @@ functions: {
       }
     }
     
-    console.log('Created', pImg.particles.array.length, 'image particles');
+
   };
 
   pImg.functions.particles.updateParticles = function() {
@@ -796,7 +787,7 @@ functions: {
     
     // Setup event actions for secondary particles if enabled
     if (pImg.secondary_particles_config && pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
-      console.log('Setting up secondary particle interactivity');
+
       
       // Initialize fn_array if not exists
       if (!pImg.secondary_particles_config.interactivity_fn_array) {
@@ -1040,7 +1031,7 @@ window.particleImageDisplay = function(tag_id) {
         const params = JSON.parse(xhr.responseText);
         pImgDom.push(new ParticleImageDisplayer(tag_id, canvas, params));
       } else {
-        console.log(`failed to load params.json. XMLHTTPRequest status: ${xhr.statusText}`);
+
       }
     };
     xhr.send();
@@ -1054,13 +1045,10 @@ window.randIntInRange = function(min, max) {
 
 // Global configuration merger for secondary particles
 window.mergeSecondaryConfig = function(primary, secondary) {
-  console.log('mergeSecondaryConfig called with primary:', primary, 'secondary:', secondary);
-  
   // Default inheritance unless explicitly disabled
   const shouldInherit = secondary.inherit_from_primary !== false;
   
   if (!shouldInherit) {
-    console.log('Secondary particles configured to not inherit from primary');
     return secondary;
   }
   
@@ -1086,7 +1074,6 @@ window.mergeSecondaryConfig = function(primary, secondary) {
     }
   }
   
-  console.log('mergeSecondaryConfig returning:', merged);
   return merged;
 };
 
