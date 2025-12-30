@@ -48,6 +48,13 @@
       "path": "/chest/test.png",
       "is_external": false
     },
+    "animation": {
+      "enabled": true,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "frame_duration_ms": 150,
+      "loop": true,
+      "auto_start": true
+    },
     "position": {
       "x_img_pct": -15,
       "y_img_pct": -8

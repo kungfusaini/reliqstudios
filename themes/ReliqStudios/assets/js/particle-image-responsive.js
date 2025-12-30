@@ -49,14 +49,24 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
         path: null,
         is_external: false
       },
+      animation: {
+        enabled: false,
+        frames: [],
+        frame_duration_ms: 150,
+        loop: true,
+        auto_start: true,
+        current_frame: 0,
+        is_playing: false,
+        last_frame_time: 0
+      },
       position: {
-        x_img_pct: 0,
-        y_img_pct: 0
+        x_img_pct: -15,
+        y_img_pct: -8
       },
       size: {
-        canvas_pct: 60,
-        min_px: 50,
-        max_px: 800
+        canvas_pct: 50,
+        min_px: 350,
+        max_px: 2000
       }
     },
     interactions: {
@@ -98,6 +108,14 @@ functions: {
   if (params) {
     Object.deepExtend(pImg, params);
   }
+  
+  // Initialize frame cache for animation
+  pImg.image.frameCache = {
+    frames: new Map(), // frameNumber -> pixelData
+    loadedCount: 0,
+    totalCount: 0,
+    isInitialized: false
+  };
   
   // Initialize secondary particle system
   if (params && params.secondary_particles && params.secondary_particles.enabled) {
@@ -187,17 +205,41 @@ functions: {
       // get aspect ratio (only have to compute once on initial load)
       pImg.image.aspect_ratio = pImg.image.obj.width / pImg.image.obj.height;
       pImg.functions.image.resize();
-      const img_pixels = pImg.functions.canvas.getImagePixels();
-      pImg.functions.particles.createImageParticles(img_pixels);
       
-      // Initialize secondary particles if enabled
-      if (pImg.secondary_particles_config) {
-        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
-          pImg.secondary_particles_config
-        );
+      if (pImg.image.animation.enabled) {
+        // Load animation frames
+        pImg.functions.image.loadAnimationFrames().then(() => {
+          // Create initial particles from first frame
+          const firstFrame = pImg.image.animation.frames[0];
+          const pixelData = pImg.functions.image.getFramePixels(firstFrame);
+          if (pixelData) {
+            pImg.functions.particles.createImageParticles(pixelData);
+            pImg.image.animation.current_frame = firstFrame;
+          }
+          
+          // Initialize secondary particles if enabled
+          if (pImg.secondary_particles_config) {
+            pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+              pImg.secondary_particles_config
+            );
+          }
+          
+          pImg.functions.particles.animateParticles();
+        });
+      } else {
+        // Original static image behavior
+        const img_pixels = pImg.functions.canvas.getImagePixels();
+        pImg.functions.particles.createImageParticles(img_pixels);
+        
+        // Initialize secondary particles if enabled
+        if (pImg.secondary_particles_config) {
+          pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+            pImg.secondary_particles_config
+          );
+        }
+        
+        pImg.functions.particles.animateParticles();
       }
-      
-      pImg.functions.particles.animateParticles();
     });
     
     pImg.image.obj.addEventListener('error', function() {
@@ -213,6 +255,141 @@ functions: {
     pImg.image.obj.src = pImg.image.src.path;
     if (pImg.image.src.is_external) {
       pImg.image.obj.crossOrigin = "anonymous";
+    }
+  };
+
+  // Helper function to calculate frame sizing and positioning
+  pImg.functions.image.calculateFrameBounds = function(img) {
+    const aspectRatio = img.width / img.height;
+    let scaledWidth, scaledHeight;
+    
+    if (aspectRatio < pImg.canvas.aspect_ratio) {
+      scaledHeight = pImg.functions.utils.clamp(Math.round(pImg.canvas.h * pImg.image.size.canvas_pct / 100), pImg.image.size.min_px, pImg.image.size.max_px);
+      scaledWidth = Math.round(scaledHeight * aspectRatio);
+    } else {
+      scaledWidth = pImg.functions.utils.clamp(Math.round(pImg.canvas.w * pImg.image.size.canvas_pct / 100), pImg.image.size.min_px, pImg.image.size.max_px);
+      scaledHeight = Math.round(scaledWidth / aspectRatio);
+    }
+    
+    const x_offset = (scaledWidth * pImg.image.position.x_img_pct) / 100;
+    const y_offset = (scaledHeight * pImg.image.position.y_img_pct) / 100;
+    const x_pos = pImg.canvas.w / 2 - scaledWidth / 2 + x_offset;
+    const y_pos = pImg.canvas.h / 2 - scaledHeight / 2 + y_offset;
+    
+    return { x_pos, y_pos, scaledWidth, scaledHeight };
+  };
+
+  // Frame loading and caching functions for sprite animation
+  pImg.functions.image.loadAnimationFrames = function() {
+    if (!pImg.image.animation.enabled || pImg.image.frameCache.isInitialized) {
+      return Promise.resolve();
+    }
+    
+    const frames = pImg.image.animation.frames;
+    pImg.image.frameCache.totalCount = frames.length;
+    
+    const loadPromises = frames.map(frameNum => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        
+        img.addEventListener('load', function() {
+          const bounds = pImg.functions.image.calculateFrameBounds(img);
+          
+          // Process frame and cache pixel data
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCanvas.width = pImg.canvas.w;
+          tempCanvas.height = pImg.canvas.h;
+          
+          tempCtx.drawImage(img, bounds.x_pos, bounds.y_pos, bounds.scaledWidth, bounds.scaledHeight);
+          const pixelData = tempCtx.getImageData(bounds.x_pos, bounds.y_pos, bounds.scaledWidth, bounds.scaledHeight);
+          
+          pImg.image.frameCache.frames.set(frameNum, pixelData);
+          pImg.image.frameCache.loadedCount++;
+          resolve(frameNum);
+        });
+        
+        img.addEventListener('error', function() {
+          resolve(frameNum);
+        });
+        
+        img.src = `/chest/${frameNum}.png`;
+        if (pImg.image.src.is_external) {
+          img.crossOrigin = "anonymous";
+        }
+      });
+    });
+    
+    return Promise.all(loadPromises).then(() => {
+      pImg.image.frameCache.isInitialized = true;
+      if (pImg.image.animation.auto_start) {
+        pImg.functions.animation.start();
+      }
+    });
+  };
+
+  pImg.functions.image.getFramePixels = function(frameNum) {
+    return pImg.image.frameCache.frames.get(frameNum) || null;
+  };
+
+  /*
+  ========================================
+  =          ANIMATION FUNCTIONS         =
+  ========================================
+  */
+  pImg.functions.animation = {
+    start: function() {
+      if (!pImg.image.animation.enabled || pImg.image.animation.is_playing) {
+        return;
+      }
+      
+      pImg.image.animation.is_playing = true;
+      pImg.image.animation.last_frame_time = performance.now();
+      this.animate();
+    },
+    
+    stop: function() {
+      pImg.image.animation.is_playing = false;
+    },
+    
+    setFrame: function(frameNum) {
+      if (!pImg.image.frameCache.frames.has(frameNum)) {
+        return;
+      }
+      
+      pImg.image.animation.current_frame = frameNum;
+      const pixelData = pImg.functions.image.getFramePixels(frameNum);
+      if (pixelData) {
+        // Clear all existing particles and recreate from new frame
+        pImg.particles.array = [];
+        pImg.functions.particles.createImageParticles(pixelData, true); // Start at destination
+      }
+    },
+    
+    animate: function() {
+      if (!pImg.image.animation.is_playing) {
+        return;
+      }
+      
+      const currentTime = performance.now();
+      const deltaTime = currentTime - pImg.image.animation.last_frame_time;
+      
+      if (deltaTime >= pImg.image.animation.frame_duration_ms) {
+        const frames = pImg.image.animation.frames;
+        const currentIndex = frames.indexOf(pImg.image.animation.current_frame);
+        let nextIndex = (currentIndex + 1) % frames.length;
+        
+        // Handle loop logic
+        if (!pImg.image.animation.loop && nextIndex === 0) {
+          this.stop();
+          return;
+        }
+        
+        this.setFrame(frames[nextIndex]);
+        pImg.image.animation.last_frame_time = currentTime;
+      }
+      
+      requestAnimationFrame(() => this.animate());
     }
   };
 
@@ -1129,6 +1306,71 @@ window.particleImageDisplay = function(tag_id) {
 // Global utility functions
 window.randIntInRange = function(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Helper to get particle instance by ID
+function getParticleInstance(tag_id) {
+  return pImgDom.find(instance => instance.canvas?.parentElement?.id === tag_id);
+}
+
+// Global animation controls for chest sprite animation
+window.particleAnimationControls = {
+  play: function(tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    pImgInstance?.functions.animation.start();
+  },
+  
+  pause: function(tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    pImgInstance?.functions.animation.stop();
+  },
+  
+  stop: function(tag_id = 'particle-image') {
+    this.pause(tag_id);
+    this.setFrame(0, tag_id);
+  },
+  
+  setFrame: function(frameNum, tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    pImgInstance?.functions.animation.setFrame(frameNum);
+  },
+  
+  nextFrame: function(tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    if (pImgInstance) {
+      const frames = pImgInstance.image.animation.frames;
+      const currentIndex = frames.indexOf(pImgInstance.image.animation.current_frame);
+      const nextIndex = (currentIndex + 1) % frames.length;
+      this.setFrame(frames[nextIndex], tag_id);
+    }
+  },
+  
+  previousFrame: function(tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    if (pImgInstance) {
+      const frames = pImgInstance.image.animation.frames;
+      const currentIndex = frames.indexOf(pImgInstance.image.animation.current_frame);
+      const prevIndex = currentIndex === 0 ? frames.length - 1 : currentIndex - 1;
+      this.setFrame(frames[prevIndex], tag_id);
+    }
+  },
+  
+  setSpeed: function(speedMultiplier, tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    if (pImgInstance) {
+      pImgInstance.image.animation.frame_duration_ms = 150 / speedMultiplier;
+    }
+  },
+  
+  isPlaying: function(tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    return pImgInstance?.image.animation.is_playing || false;
+  },
+  
+  getCurrentFrame: function(tag_id = 'particle-image') {
+    const pImgInstance = getParticleInstance(tag_id);
+    return pImgInstance?.image.animation.current_frame || null;
+  }
 };
 
 // Global configuration merger for secondary particles
