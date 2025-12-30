@@ -16,7 +16,7 @@
       "density": {
         "base_density": 50,
         "min_density": 50,
-        "max_density": 80,
+        "max_density": 50,
         "scale_factor": 0.08,
         "base_viewport": 600
       }
@@ -49,14 +49,12 @@
       "is_external": false
     },
     "position": {
-      "x_percent": -0.05,
-      "y_percent": -0.15,
-      "x_offset": 0,
-      "y_offset": 0
+      "x_img_pct": -15,
+      "y_img_pct": -8
     },
     "size": {
-      "canvas_pct": 90,
-      "min_px": 200,
+      "canvas_pct": 50,
+      "min_px": 350,
       "max_px": 2000
     }
   },

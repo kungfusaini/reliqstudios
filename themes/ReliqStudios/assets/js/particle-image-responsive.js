@@ -50,10 +50,8 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
         is_external: false
       },
       position: {
-        x_percent: 0,
-        y_percent: 0,
-        x_offset: 0,
-        y_offset: 0
+        x_img_pct: 0,
+        y_img_pct: 0
       },
       size: {
         canvas_pct: 60,
@@ -131,11 +129,21 @@ functions: {
   };
 
   pImg.functions.canvas.onResize = function() {
+    const oldCanvasW = pImg.canvas.w;
+    const oldCanvasH = pImg.canvas.h;
+    
     pImg.canvas.w = pImg.canvas.el.offsetWidth;
     pImg.canvas.h = pImg.canvas.el.offsetHeight;
     pImg.canvas.el.width = pImg.canvas.w;
     pImg.canvas.el.height = pImg.canvas.h;
     pImg.canvas.aspect_ratio = pImg.canvas.w / pImg.canvas.h;
+    
+    // Debug resize changes
+    console.log('=== RESIZE DEBUG ===');
+    console.log('Canvas size changed from:', { w: oldCanvasW, h: oldCanvasH });
+    console.log('To new canvas size:', { w: pImg.canvas.w, h: pImg.canvas.h });
+    console.log('Window size:', { w: window.innerWidth, h: window.innerHeight });
+    console.log('===================');
     
     // Store current density if not set
     if (!pImg.currentDensity) {
@@ -178,21 +186,34 @@ functions: {
       pImg.image.obj.width = pImg.functions.utils.clamp(Math.round(pImg.canvas.w * pImg.image.size.canvas_pct / 100), pImg.image.size.min_px, pImg.image.size.max_px);
       pImg.image.obj.height = Math.round(pImg.image.obj.width / pImg.image.aspect_ratio);
     }
-    // set x,y coords to center image on canvas with responsive positioning
-    let x_offset = 0, y_offset = 0;
+    // set x,y coords to center image on canvas with image-relative positioning
+    const x_offset = (pImg.image.obj.width * pImg.image.position.x_img_pct) / 100;
+    const y_offset = (pImg.image.obj.height * pImg.image.position.y_img_pct) / 100;
     
-    // Use percentage-based positioning if available (responsive)
-    if (pImg.image.position.x_percent !== undefined) {
-      x_offset = pImg.canvas.w * pImg.image.position.x_percent;
-    } else if (pImg.image.position.x_offset !== undefined) {
-      x_offset = pImg.image.position.x_offset; // Fallback to pixel offsets
-    }
-    
-    if (pImg.image.position.y_percent !== undefined) {
-      y_offset = pImg.canvas.h * pImg.image.position.y_percent;
-    } else if (pImg.image.position.y_offset !== undefined) {
-      y_offset = pImg.image.position.y_offset; // Fallback to pixel offsets
-    }
+    // Debug logging to understand the positioning issue
+    console.log('=== POSITIONING DEBUG ===');
+    console.log('Window dimensions:', { w: window.innerWidth, h: window.innerHeight });
+    console.log('Canvas dimensions:', { w: pImg.canvas.w, h: pImg.canvas.h });
+    console.log('Canvas aspect ratio:', pImg.canvas.aspect_ratio);
+    console.log('Image aspect ratio:', pImg.image.aspect_ratio);
+    console.log('Position config:', pImg.image.position);
+    console.log('Image size config:', pImg.image.size);
+    console.log('Canvas % constraint:', pImg.image.size.canvas_pct);
+    console.log('Image dimensions after resize:', { 
+      width: pImg.image.obj.width, 
+      height: pImg.image.obj.height 
+    });
+    console.log('Image-relative percentages:', { x_img_pct: pImg.image.position.x_img_pct, y_img_pct: pImg.image.position.y_img_pct });
+    console.log('Calculated pixel offsets:', { x_offset, y_offset });
+    console.log('Canvas center:', { 
+      x: pImg.canvas.w / 2, 
+      y: pImg.canvas.h / 2 
+    });
+    console.log('Final position (x, y):', { 
+      x: pImg.canvas.w / 2 - pImg.image.obj.width / 2 + x_offset, 
+      y: pImg.canvas.h / 2 - pImg.image.obj.height / 2 + y_offset 
+    });
+    console.log('==========================');
     
     pImg.image.x = pImg.canvas.w  / 2 - pImg.image.obj.width / 2 + x_offset;
     pImg.image.y = pImg.canvas.h / 2 - pImg.image.obj.height / 2 + y_offset;
