@@ -502,7 +502,8 @@ functions: {
           let init_xy;
           
           // Check if particles should start scrambled or at destination
-          if (at_dest || !pImg.particles?.start_scrambled) {
+          const startAtDestination = at_dest || !pImg.particles?.start_scrambled;
+          if (startAtDestination) {
             // Start at destination (either explicitly requested or scramble disabled)
             init_xy = dest_xy;
           } else {
@@ -511,7 +512,7 @@ functions: {
           }
           
           try {
-            pImg.particles.array.push(new pImg.functions.particles.SingleImageParticle(init_xy, dest_xy));
+            pImg.particles.array.push(new pImg.functions.particles.SingleImageParticle(init_xy, dest_xy, startAtDestination));
           } catch (e) {
             console.error('Error creating SingleImageParticle:', e, { init_xy, dest_xy });
           }
