@@ -99,9 +99,6 @@ functions: {
     Object.deepExtend(pImg, params);
   }
   
-  // Debug: Check original params
-  console.log('DEBUG: Original params.secondary_particles =', params?.secondary_particles);
-  
   // Initialize secondary particle system
   if (params && params.secondary_particles && params.secondary_particles.enabled) {
     const mergedConfig = window.mergeSecondaryConfig(
@@ -129,21 +126,11 @@ functions: {
   };
 
   pImg.functions.canvas.onResize = function() {
-    const oldCanvasW = pImg.canvas.w;
-    const oldCanvasH = pImg.canvas.h;
-    
     pImg.canvas.w = pImg.canvas.el.offsetWidth;
     pImg.canvas.h = pImg.canvas.el.offsetHeight;
     pImg.canvas.el.width = pImg.canvas.w;
     pImg.canvas.el.height = pImg.canvas.h;
     pImg.canvas.aspect_ratio = pImg.canvas.w / pImg.canvas.h;
-    
-    // Debug resize changes
-    console.log('=== RESIZE DEBUG ===');
-    console.log('Canvas size changed from:', { w: oldCanvasW, h: oldCanvasH });
-    console.log('To new canvas size:', { w: pImg.canvas.w, h: pImg.canvas.h });
-    console.log('Window size:', { w: window.innerWidth, h: window.innerHeight });
-    console.log('===================');
     
     // Store current density if not set
     if (!pImg.currentDensity) {
@@ -190,31 +177,6 @@ functions: {
     const x_offset = (pImg.image.obj.width * pImg.image.position.x_img_pct) / 100;
     const y_offset = (pImg.image.obj.height * pImg.image.position.y_img_pct) / 100;
     
-    // Debug logging to understand the positioning issue
-    console.log('=== POSITIONING DEBUG ===');
-    console.log('Window dimensions:', { w: window.innerWidth, h: window.innerHeight });
-    console.log('Canvas dimensions:', { w: pImg.canvas.w, h: pImg.canvas.h });
-    console.log('Canvas aspect ratio:', pImg.canvas.aspect_ratio);
-    console.log('Image aspect ratio:', pImg.image.aspect_ratio);
-    console.log('Position config:', pImg.image.position);
-    console.log('Image size config:', pImg.image.size);
-    console.log('Canvas % constraint:', pImg.image.size.canvas_pct);
-    console.log('Image dimensions after resize:', { 
-      width: pImg.image.obj.width, 
-      height: pImg.image.obj.height 
-    });
-    console.log('Image-relative percentages:', { x_img_pct: pImg.image.position.x_img_pct, y_img_pct: pImg.image.position.y_img_pct });
-    console.log('Calculated pixel offsets:', { x_offset, y_offset });
-    console.log('Canvas center:', { 
-      x: pImg.canvas.w / 2, 
-      y: pImg.canvas.h / 2 
-    });
-    console.log('Final position (x, y):', { 
-      x: pImg.canvas.w / 2 - pImg.image.obj.width / 2 + x_offset, 
-      y: pImg.canvas.h / 2 - pImg.image.obj.height / 2 + y_offset 
-    });
-    console.log('==========================');
-    
     pImg.image.x = pImg.canvas.w  / 2 - pImg.image.obj.width / 2 + x_offset;
     pImg.image.y = pImg.canvas.h / 2 - pImg.image.obj.height / 2 + y_offset;
   };
@@ -236,26 +198,6 @@ functions: {
       }
       
       pImg.functions.particles.animateParticles();
-    });
-    
-    pImg.image.obj.addEventListener('error', function() {
-      // Still create secondary particles if configured
-      if (pImg.secondary_particles_config) {
-        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
-          pImg.secondary_particles_config
-        );
-        pImg.functions.particles.animateParticles();
-      }
-    });
-    
-    pImg.image.obj.addEventListener('error', function() {
-      // Still create secondary particles if configured
-      if (pImg.secondary_particles_config) {
-        pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
-          pImg.secondary_particles_config
-        );
-        pImg.functions.particles.animateParticles();
-      }
     });
     
     pImg.image.obj.addEventListener('error', function() {
@@ -437,10 +379,6 @@ functions: {
 
     const particles = [];
     const placementConfig = config.placement || {};
-
-    // Debug logging to identify placement_mode issues
-    console.log('DEBUG: placement_mode =', config.placement_mode, typeof config.placement_mode);
-    console.log('DEBUG: full secondary config =', config);
 
     switch (String(config.placement_mode || 'grid').trim().toLowerCase()) {
       case 'grid': {
@@ -1177,12 +1115,8 @@ window.particleImageDisplay = function(tag_id) {
     xhr.open("GET", params_json, false);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 200) {
-        // Debug: Log raw JSON response
-        console.log('DEBUG: Raw JSON from server =', xhr.responseText);
-        
-        // parse parameters & launch display
+          // parse parameters & launch display
         const params = JSON.parse(xhr.responseText);
-        console.log('DEBUG: Parsed params.secondary_particles =', params?.secondary_particles);
         pImgDom.push(new ParticleImageDisplayer(tag_id, canvas, params));
       } else {
 
@@ -1202,19 +1136,11 @@ window.mergeSecondaryConfig = function(primary, secondary) {
   // Deep clone primary config as base (always inherit)
   const merged = JSON.parse(JSON.stringify(primary));
   
-  // Debug: Log secondary config before merge
-  console.log('DEBUG: Secondary config before merge =', secondary);
-  
   // Apply secondary overrides only where explicitly defined
   for (let [key, value] of Object.entries(secondary)) {
     // Skip meta fields
     if (key === 'enabled') {
       continue;
-    }
-    
-    // Debug: Log each override being applied
-    if (key === 'placement_mode') {
-      console.log('DEBUG: Applying placement_mode override =', value);
     }
     
     // Only override if secondary has a non-undefined value
@@ -1229,7 +1155,6 @@ window.mergeSecondaryConfig = function(primary, secondary) {
     }
   }
   
-  console.log('DEBUG: Final merged secondary config =', merged);
   return merged;
 };
 

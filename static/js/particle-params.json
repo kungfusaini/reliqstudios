@@ -61,7 +61,7 @@
   "interactions": {
     "repulse": {
       "detection_radius": 40,
-      "max_displacement": 1,
+      "max_displacement": 0.5,
       "repulse_duration": 0.1,
       "force_curve": "linear"
     },
