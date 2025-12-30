@@ -341,6 +341,23 @@ functions: {
       y_jitter: Math.floor(Math.random() * 7) - 3, // -3 to 3
       on_curr_frame: false
     };
+    
+    // Random movement properties - use config speed, not inherited primary speed
+    const randomSpeed = config.movement?.random?.speed || 0.1;
+    this.random_movement = {
+      enabled: config.movement?.random?.enabled || false,
+      speed: randomSpeed,
+      current_direction: Math.random() * 2 * Math.PI, // Set once, don't change
+      vx: 0,
+      vy: 0
+    };
+    
+    // Initialize velocity based on random movement config
+    if (this.random_movement.enabled) {
+      this.vx = Math.cos(this.random_movement.current_direction) * this.random_movement.speed;
+      this.vy = Math.sin(this.random_movement.current_direction) * this.random_movement.speed;
+    }
+    
     this.color = config.color;
     
     // Use responsive sizing from merged config
@@ -612,10 +629,52 @@ functions: {
   };
 
   pImg.functions.particles.updateSecondaryParticle = function(p) {
+    // Apply interactivity FIRST if enabled (so it affects this frame's movement)
+    if (pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
+      pImg.functions.interactivity.interactWithClient(p);
+    }
+    
+    // Apply random movement if enabled (always apply regardless of mouse proximity)
+    if (p.random_movement.enabled) {
+      // Calculate target velocity based on configured direction and speed
+      const target_vx = Math.cos(p.random_movement.current_direction) * p.random_movement.speed;
+      const target_vy = Math.sin(p.random_movement.current_direction) * p.random_movement.speed;
+      
+      // Smoothly blend towards target velocity (allows touch influence to fade)
+      p.vx = p.vx * 0.9 + target_vx * 0.1;
+      p.vy = p.vy * 0.9 + target_vy * 0.1;
+      
+      // Apply friction to total velocity
+      p.vx *= p.friction;
+      p.vy *= p.friction;
+      
+      // Update position
+      p.x += p.vx;
+      p.y += p.vy;
+      
+      // Bounce off canvas edges (reflect direction)
+      if (p.x < p.radius) {
+        p.x = p.radius;
+        p.random_movement.current_direction = Math.PI - p.random_movement.current_direction;
+      }
+      if (p.x > pImg.canvas.w - p.radius) {
+        p.x = pImg.canvas.w - p.radius;
+        p.random_movement.current_direction = Math.PI - p.random_movement.current_direction;
+      }
+      if (p.y < p.radius) {
+        p.y = p.radius;
+        p.random_movement.current_direction = -p.random_movement.current_direction;
+      }
+      if (p.y > pImg.canvas.h - p.radius) {
+        p.y = pImg.canvas.h - p.radius;
+        p.random_movement.current_direction = -p.random_movement.current_direction;
+      }
+    }
+    
     // Apply restless movement if enabled in inherited config
     if ((pImg.secondary_particles_config.movement.restless.enabled) && (p.restlessness.on_curr_frame)) {
       pImg.functions.particles.jitterParticle(p);
-    } else {
+    } else if (!p.random_movement.enabled) {
       // Secondary particles don't have a destination to approach, just apply friction
       p.vx *= p.friction;
       p.vy *= p.friction;
@@ -626,11 +685,6 @@ functions: {
     // Smooth size transitions
     if (Math.abs(p.radius - p.targetRadius) > 0.1) {
       p.radius += (p.targetRadius - p.radius) * 0.1;
-    }
-
-    // Apply interactivity if enabled
-    if (pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
-      pImg.functions.interactivity.interactWithClient(p);
     }
   };
 
@@ -740,6 +794,27 @@ functions: {
     }
   };
 
+  pImg.functions.interactivity.repulseSecondaryParticle = function(p, args) {
+    // compute distance to mouse
+    const dx_mouse = p.x - pImg.mouse.x,
+          dy_mouse = p.y - pImg.mouse.y,
+          mouse_dist = Math.sqrt(dx_mouse * dx_mouse + dy_mouse * dy_mouse);
+    
+    if (mouse_dist <= args.detection_radius) {
+      // Get sensitivity from secondary particles config
+      const sensitivity = pImg.secondary_particles_config?.interactivity?.touch_sensitivity || 0.1;
+      const maxOffset = pImg.secondary_particles_config?.interactivity?.touch_max_offset || 2.0;
+      
+      // Calculate gentle repulsion force (much lighter than primary particles)
+      const distance_factor = 1 - (mouse_dist / args.detection_radius);
+      const repulse_force = distance_factor * sensitivity * maxOffset;
+      
+      // Apply gentle force as direct velocity addition (not acceleration)
+      p.vx += ((p.x - pImg.mouse.x) / mouse_dist) * repulse_force;
+      p.vy += ((p.y - pImg.mouse.y) / mouse_dist) * repulse_force;
+    }
+  };
+
   pImg.functions.interactivity.grabParticle = function(p, args) {
     const dx_mouse = p.x - pImg.mouse.x,
           dy_mouse = p.y - pImg.mouse.y,
@@ -785,15 +860,15 @@ functions: {
     if (pImg.secondary_particles_config && pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
       const secondaryInteractivity = pImg.secondary_particles_config.interactivity;
       
-      // Secondary particles always inherit primary interactivity needs unless custom events are defined
-      if (secondaryInteractivity.on_hover?.enabled) needsMouseMove = true;
-      if (secondaryInteractivity.on_click?.enabled) needsMouseDown = true;
-      if (secondaryInteractivity.on_touch?.enabled) needsTouchMove = true;
-      
-      // Also inherit primary interactivity needs
+      // Secondary particles inherit primary interactivity needs by default
       if (pImg.particles.interactivity.on_hover.enabled) needsMouseMove = true;
       if (pImg.particles.interactivity.on_click.enabled) needsMouseDown = true;
       if (pImg.particles.interactivity.on_touch.enabled) needsTouchMove = true;
+      
+      // Additional events if custom secondary interactivity is defined
+      if (secondaryInteractivity.on_hover?.enabled) needsMouseMove = true;
+      if (secondaryInteractivity.on_click?.enabled) needsMouseDown = true;
+      if (secondaryInteractivity.on_touch?.enabled) needsTouchMove = true;
     }
     
     // Setup universal mouse listeners
@@ -848,7 +923,19 @@ functions: {
         pImg.secondary_particles_config.interactivity_fn_array = [];
       }
       
-      // Always setup custom event actions for secondary particles if they have custom interactivity
+      // Setup custom event actions for secondary particles
+      // First ensure secondary particles inherit primary particle actions as defaults
+      if (pImg.particles.interactivity.on_hover.enabled && !pImg.secondary_particles_config.interactivity.on_hover) {
+        pImg.secondary_particles_config.interactivity.on_hover = pImg.particles.interactivity.on_hover;
+      }
+      if (pImg.particles.interactivity.on_click.enabled && !pImg.secondary_particles_config.interactivity.on_click) {
+        pImg.secondary_particles_config.interactivity.on_click = pImg.particles.interactivity.on_click;
+      }
+      if (pImg.particles.interactivity.on_touch.enabled && !pImg.secondary_particles_config.interactivity.on_touch) {
+        pImg.secondary_particles_config.interactivity.on_touch = pImg.particles.interactivity.on_touch;
+      }
+      
+      // Then setup event actions
       pImg.functions.utils.addEventActions('on_hover', pImg.secondary_particles_config);
       pImg.functions.utils.addEventActions('on_click', pImg.secondary_particles_config);
       pImg.functions.utils.addEventActions('on_touch', pImg.secondary_particles_config);
@@ -862,27 +949,16 @@ functions: {
     
     if (isSecondary) {
       // Handle secondary particle interactivity
-      if (!pImg.secondary_particles_config.interactivity) {
-        return; // No interactivity configured for secondary particles
+      if (!pImg.secondary_particles_config.interactivity || !pImg.secondary_particles_config.interactivity.enabled) {
+        return; // No interactivity configured or explicitly disabled for secondary particles
       }
       
-      if (!pImg.secondary_particles_config.interactivity.enabled) {
-        return; // Secondary particle interactivity explicitly disabled
-      }
-      
-      // Use secondary particle configuration
-      const interactivityConfig = pImg.secondary_particles_config.interactivity;
-      
-      // Always inherit primary particle interactivity first
-      for (let func of pImg.particles.interactivity.fn_array) {
-        func(p, pImg.interactions[pImg.particles.interactivity.on_hover.action]);
-      }
-      
-      // Then apply custom secondary particle interactivity if available
-      const secondaryFnArray = pImg.secondary_particles_config.interactivity_fn_array || [];
-      for (let func of secondaryFnArray) {
-        func(p, pImg.interactions[interactivityConfig.on_hover?.action || 'repulse']);
-      }
+      // Use the gentle secondary particle repulse function
+      pImg.functions.interactivity.onMouseMove(
+        pImg.functions.interactivity.repulseSecondaryParticle, 
+        pImg.interactions[pImg.particles.interactivity.on_hover.action], 
+        p
+      );
     } else {
       // Handle primary particle interactivity
       for (let func of pImg.particles.interactivity.fn_array) {

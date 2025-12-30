@@ -84,8 +84,16 @@
     "placement_image_buffer": 5,
     "color": "#ebdbb2",
     "render_order": "background",
+    "movement": {
+      "random": {
+        "enabled": true,
+        "speed": 0.3
+      }
+    },
     "interactivity": {
-      "enabled": true
+      "enabled": true,
+      "touch_sensitivity": 0.1,
+      "touch_max_offset": 2.0
     }
   },
 
