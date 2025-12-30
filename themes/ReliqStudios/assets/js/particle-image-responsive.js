@@ -101,6 +101,9 @@ functions: {
     Object.deepExtend(pImg, params);
   }
   
+  // Debug: Check original params
+  console.log('DEBUG: Original params.secondary_particles =', params?.secondary_particles);
+  
   // Initialize secondary particle system
   if (params && params.secondary_particles && params.secondary_particles.enabled) {
     const mergedConfig = window.mergeSecondaryConfig(
@@ -359,20 +362,13 @@ functions: {
   ========================================
   */
   pImg.functions.config.mergeSecondaryConfig = function(primary, secondary) {
-    // Default inheritance unless explicitly disabled
-    const shouldInherit = secondary.inherit_from_primary !== false;
-    
-    if (!shouldInherit) {
-      return secondary;
-    }
-    
-    // Deep clone primary config as base
+    // Deep clone primary config as base (always inherit)
     const merged = JSON.parse(JSON.stringify(primary));
     
     // Apply secondary overrides only where explicitly defined
     for (let [key, value] of Object.entries(secondary)) {
       // Skip meta fields
-      if (key === 'enabled' || key === 'inherit_from_primary') {
+      if (key === 'enabled') {
         continue;
       }
       
@@ -404,7 +400,11 @@ functions: {
     const particles = [];
     const placementConfig = config.placement || {};
 
-    switch (config.placement_mode) {
+    // Debug logging to identify placement_mode issues
+    console.log('DEBUG: placement_mode =', config.placement_mode, typeof config.placement_mode);
+    console.log('DEBUG: full secondary config =', config);
+
+    switch (String(config.placement_mode || 'grid').trim().toLowerCase()) {
       case 'grid': {
         const gridParticles = pImg.functions.particles.createGridParticles(config, placementConfig);
         particles.push(...gridParticles);
@@ -415,7 +415,13 @@ functions: {
         particles.push(...randomParticles);
         break;
       }
+      case 'around_image': {
+        const aroundImageParticles = pImg.functions.particles.createAroundImageParticles(config);
+        particles.push(...aroundImageParticles);
+        break;
+      }
       default: {
+        console.warn('Unknown placement_mode:', config.placement_mode, '- defaulting to grid');
         const defaultParticles = pImg.functions.particles.createGridParticles(config, placementConfig);
         particles.push(...defaultParticles);
         break;
@@ -449,7 +455,7 @@ functions: {
     const margin = placementConfig.random_margin || 50;
     const minSpacing = 10; // Minimum distance between particles
     
-    const particleCount = Math.floor(density * (pImg.canvas.w * pImg.canvas.h) / 10000);
+    const particleCount = Math.floor(density * (pImg.canvas.w * pImg.canvas.h) / 10000 * (config.particle_multiplier || 1));
     
     for (let i = 0; i < particleCount; i++) {
       let x, y;
@@ -457,8 +463,58 @@ functions: {
       
       // Try to place particle without overlap
       do {
-        x = margin + Math.random() * (pImg.canvas.w - 2 * margin);
-        y = margin + Math.random() * (pImg.canvas.h - 2 * margin);
+        // Calculate center of canvas
+        const centerX = pImg.canvas.w / 2;
+        const centerY = pImg.canvas.h / 2;
+        const maxRadius = (Math.min(pImg.canvas.w, pImg.canvas.h) * (config.placement_radius_percentage || 100)) / 200;
+        
+        // Generate random position within radius
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = Math.random() * maxRadius;
+        x = centerX + Math.cos(angle) * distance;
+        y = centerY + Math.sin(angle) * distance;
+        attempts++;
+      } while (attempts < 50 && pImg.functions.particles.hasOverlap(x, y, particles, minSpacing));
+      
+      if (attempts < 50) {
+        particles.push(new pImg.functions.particles.SecondaryParticle(x, y, config));
+      }
+    }
+    
+    return particles;
+  };
+
+  pImg.functions.particles.createAroundImageParticles = function(config) {
+    const particles = [];
+    const density = pImg.functions.utils.calculateResponsiveDensity();
+    const minSpacing = 10; // Minimum distance between particles
+    
+    // Calculate canvas-centered elliptical bounds with image aspect ratio
+    const canvasCenterX = pImg.canvas.w / 2;
+    const canvasCenterY = pImg.canvas.h / 2;
+    
+    // Add buffer percentage using image aspect ratio
+    const bufferPercent = (config.placement_image_buffer || 20) / 100;
+    const imageAspectRatio = pImg.image.obj.width / pImg.image.obj.height;
+    
+    // Use larger dimension for base radius, maintain aspect ratio
+    const baseRadius = Math.max(pImg.image.obj.width, pImg.image.obj.height) / 2 * (1 + bufferPercent);
+    const widthRadius = baseRadius;
+    const heightRadius = baseRadius / imageAspectRatio;
+    
+    const particleCount = Math.floor(density * (pImg.canvas.w * pImg.canvas.h) / 10000 * (config.particle_multiplier || 1));
+    
+    for (let i = 0; i < particleCount; i++) {
+      let x, y;
+      let attempts = 0;
+      
+      // Try to place particle without overlap
+      do {
+        // Generate random position within ellipse centered on canvas
+        const angle = Math.random() * 2 * Math.PI;
+        const normalizedRadius = Math.random(); // sqrt gives even distribution
+        x = canvasCenterX + Math.cos(angle) * widthRadius * Math.sqrt(normalizedRadius);
+        y = canvasCenterY + Math.sin(angle) * heightRadius * Math.sqrt(normalizedRadius);
         attempts++;
       } while (attempts < 50 && pImg.functions.particles.hasOverlap(x, y, particles, minSpacing));
       
@@ -728,19 +784,16 @@ functions: {
     // Check secondary particles interactivity needs
     if (pImg.secondary_particles_config && pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
       const secondaryInteractivity = pImg.secondary_particles_config.interactivity;
-      const shouldInherit = secondaryInteractivity.inherit_repulse !== false;
       
-      if (shouldInherit) {
-        // Secondary particles inherit primary interactivity needs
-        if (pImg.particles.interactivity.on_hover.enabled) needsMouseMove = true;
-        if (pImg.particles.interactivity.on_click.enabled) needsMouseDown = true;
-        if (pImg.particles.interactivity.on_touch.enabled) needsTouchMove = true;
-      } else {
-        // Check custom secondary interactivity
-        if (secondaryInteractivity.on_hover?.enabled) needsMouseMove = true;
-        if (secondaryInteractivity.on_click?.enabled) needsMouseDown = true;
-        if (secondaryInteractivity.on_touch?.enabled) needsTouchMove = true;
-      }
+      // Secondary particles always inherit primary interactivity needs unless custom events are defined
+      if (secondaryInteractivity.on_hover?.enabled) needsMouseMove = true;
+      if (secondaryInteractivity.on_click?.enabled) needsMouseDown = true;
+      if (secondaryInteractivity.on_touch?.enabled) needsTouchMove = true;
+      
+      // Also inherit primary interactivity needs
+      if (pImg.particles.interactivity.on_hover.enabled) needsMouseMove = true;
+      if (pImg.particles.interactivity.on_click.enabled) needsMouseDown = true;
+      if (pImg.particles.interactivity.on_touch.enabled) needsTouchMove = true;
     }
     
     // Setup universal mouse listeners
@@ -795,12 +848,10 @@ functions: {
         pImg.secondary_particles_config.interactivity_fn_array = [];
       }
       
-      // Only setup custom event actions if not inheriting from primary
-      if (pImg.secondary_particles_config.interactivity.inherit_repulse === false) {
-        pImg.functions.utils.addEventActions('on_hover', pImg.secondary_particles_config);
-        pImg.functions.utils.addEventActions('on_click', pImg.secondary_particles_config);
-        pImg.functions.utils.addEventActions('on_touch', pImg.secondary_particles_config);
-      }
+      // Always setup custom event actions for secondary particles if they have custom interactivity
+      pImg.functions.utils.addEventActions('on_hover', pImg.secondary_particles_config);
+      pImg.functions.utils.addEventActions('on_click', pImg.secondary_particles_config);
+      pImg.functions.utils.addEventActions('on_touch', pImg.secondary_particles_config);
     }
   };
 
@@ -821,19 +872,16 @@ functions: {
       
       // Use secondary particle configuration
       const interactivityConfig = pImg.secondary_particles_config.interactivity;
-      const shouldInherit = interactivityConfig.inherit_repulse !== false;
       
-      if (shouldInherit) {
-        // Inherit primary particle interactivity
-        for (let func of pImg.particles.interactivity.fn_array) {
-          func(p, pImg.interactions[pImg.particles.interactivity.on_hover.action]);
-        }
-      } else {
-        // Use custom secondary particle interactivity
-        const secondaryFnArray = pImg.secondary_particles_config.interactivity_fn_array || [];
-        for (let func of secondaryFnArray) {
-          func(p, pImg.interactions[interactivityConfig.on_hover?.action || 'repulse']);
-        }
+      // Always inherit primary particle interactivity first
+      for (let func of pImg.particles.interactivity.fn_array) {
+        func(p, pImg.interactions[pImg.particles.interactivity.on_hover.action]);
+      }
+      
+      // Then apply custom secondary particle interactivity if available
+      const secondaryFnArray = pImg.secondary_particles_config.interactivity_fn_array || [];
+      for (let func of secondaryFnArray) {
+        func(p, pImg.interactions[interactivityConfig.on_hover?.action || 'repulse']);
       }
     } else {
       // Handle primary particle interactivity
@@ -1028,8 +1076,12 @@ window.particleImageDisplay = function(tag_id) {
     xhr.open("GET", params_json, false);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 200) {
+        // Debug: Log raw JSON response
+        console.log('DEBUG: Raw JSON from server =', xhr.responseText);
+        
         // parse parameters & launch display
         const params = JSON.parse(xhr.responseText);
+        console.log('DEBUG: Parsed params.secondary_particles =', params?.secondary_particles);
         pImgDom.push(new ParticleImageDisplayer(tag_id, canvas, params));
       } else {
 
@@ -1046,21 +1098,22 @@ window.randIntInRange = function(min, max) {
 
 // Global configuration merger for secondary particles
 window.mergeSecondaryConfig = function(primary, secondary) {
-  // Default inheritance unless explicitly disabled
-  const shouldInherit = secondary.inherit_from_primary !== false;
-  
-  if (!shouldInherit) {
-    return secondary;
-  }
-  
-  // Deep clone primary config as base
+  // Deep clone primary config as base (always inherit)
   const merged = JSON.parse(JSON.stringify(primary));
+  
+  // Debug: Log secondary config before merge
+  console.log('DEBUG: Secondary config before merge =', secondary);
   
   // Apply secondary overrides only where explicitly defined
   for (let [key, value] of Object.entries(secondary)) {
     // Skip meta fields
-    if (key === 'enabled' || key === 'inherit_from_primary') {
+    if (key === 'enabled') {
       continue;
+    }
+    
+    // Debug: Log each override being applied
+    if (key === 'placement_mode') {
+      console.log('DEBUG: Applying placement_mode override =', value);
     }
     
     // Only override if secondary has a non-undefined value
@@ -1075,6 +1128,7 @@ window.mergeSecondaryConfig = function(primary, secondary) {
     }
   }
   
+  console.log('DEBUG: Final merged secondary config =', merged);
   return merged;
 };
 

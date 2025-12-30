@@ -79,16 +79,13 @@
 
   "secondary_particles": {
     "enabled": true,
-    "inherit_from_primary": true,
-    "placement_mode": "grid",
-    "placement": {
-      "grid_spacing": 30
-    },
-    "color": "#928374",
+    "placement_mode": "around_image",
+    "particle_multiplier": 0.02,
+    "placement_image_buffer": 5,
+    "color": "#ebdbb2",
     "render_order": "background",
     "interactivity": {
-      "enabled": true,
-      "inherit_repulse": true
+      "enabled": true
     }
   },
 
