@@ -3,6 +3,8 @@
   flex-grow: 0;
   color: $color-secondary;
   font-size: 0.8rem;
+  position: relative;
+  z-index: 3;
 
   &__inner {
     display: flex;
