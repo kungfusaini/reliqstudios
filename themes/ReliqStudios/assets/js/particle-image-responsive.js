@@ -343,13 +343,23 @@ functions: {
         return;
       }
       
+      // Reset to first frame for click-to-play behavior
+      pImg.image.animation.current_frame = pImg.image.animation.frames[0];
+      
       pImg.image.animation.is_playing = true;
       pImg.image.animation.last_frame_time = performance.now();
+      
+      // Update cursor to indicate busy state
+      pImg.canvas.el.style.cursor = 'wait';
+      
       this.animate();
     },
     
     stop: function() {
       pImg.image.animation.is_playing = false;
+      
+      // Restore cursor when animation stops
+      pImg.canvas.el.style.cursor = 'pointer';
     },
     
     setFrame: function(frameNum) {
@@ -1054,9 +1064,31 @@ functions: {
     pImg.functions.utils.addEventActions('on_click', pImg);
     pImg.functions.utils.addEventActions('on_touch', pImg);
     
+    // Add click-to-play animation trigger if animation is enabled
+    if (pImg.image.animation.enabled) {
+      pImg.canvas.el.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Only start if not already playing to prevent overlap
+        if (!pImg.image.animation.is_playing) {
+          pImg.functions.animation.start();
+        }
+      });
+      
+      pImg.canvas.el.addEventListener('touchstart', function(e) {
+        // Prevent triggering on drag
+        if (e.touches.length === 1) {
+          e.preventDefault();
+          // Only start if not already playing to prevent overlap
+          if (!pImg.image.animation.is_playing) {
+            pImg.functions.animation.start();
+          }
+        }
+      }, { passive: false });
+    }
+    
     // Setup event actions for secondary particles if enabled
     if (pImg.secondary_particles_config && pImg.secondary_particles_config.interactivity && pImg.secondary_particles_config.interactivity.enabled) {
-
+ 
       
       // Initialize fn_array if not exists
       if (!pImg.secondary_particles_config.interactivity_fn_array) {
@@ -1083,6 +1115,11 @@ functions: {
   };
 
   pImg.functions.interactivity.interactWithClient = function(p) {
+    // Skip interactions during animation playback
+    if (pImg.image.animation && pImg.image.animation.is_playing) {
+      return;
+    }
+    
     // Check if this is a secondary particle
     const isSecondary = pImg.secondary_particles_config && 
                       pImg.particles.secondary_array.includes(p);
@@ -1281,6 +1318,7 @@ window.particleImageDisplay = function(tag_id) {
   canvas_el.className = canvas_classname;
   canvas_el.style.width = "100%";
   canvas_el.style.height = "100%";
+  canvas_el.style.cursor = "pointer"; // Indicate clickable area
   const canvas = document.getElementById(tag_id).appendChild(canvas_el);
 
 
@@ -1315,6 +1353,7 @@ function getParticleInstance(tag_id) {
 
 // Global animation controls for chest sprite animation
 window.particleAnimationControls = {
+  // Click to play animation from beginning (same as clicking canvas)
   play: function(tag_id = 'particle-image') {
     const pImgInstance = getParticleInstance(tag_id);
     pImgInstance?.functions.animation.start();
