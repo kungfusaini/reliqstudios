@@ -360,8 +360,7 @@ functions: {
       pImg.image.animation.is_playing = true;
       pImg.image.animation.last_frame_time = performance.now();
       
-      // Update cursor to indicate busy state
-      pImg.canvas.el.style.cursor = 'wait';
+
       
       this.animate();
     },
@@ -375,8 +374,7 @@ functions: {
       // Disable floating permanently after animation stops
       pImg.particles.movement.floating.enabled = false;
       
-      // Restore cursor when animation stops
-      pImg.canvas.el.style.cursor = 'pointer';
+
     },
     
     setFrame: function(frameNum) {
@@ -1379,7 +1377,7 @@ window.particleImageDisplay = function(tag_id) {
   canvas_el.className = canvas_classname;
   canvas_el.style.width = "100%";
   canvas_el.style.height = "100%";
-  canvas_el.style.cursor = "pointer"; // Indicate clickable area
+
   const canvas = document.getElementById(tag_id).appendChild(canvas_el);
 
 
