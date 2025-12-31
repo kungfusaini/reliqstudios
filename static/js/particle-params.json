@@ -26,6 +26,12 @@
       "restless": {
         "enabled": true,
         "value": 1000
+      },
+      "floating": {
+        "enabled": true,
+        "amplitude": 4,
+        "frequency": 0.25,
+        "phase_offset": 0
       }
     },
     "interactivity": {

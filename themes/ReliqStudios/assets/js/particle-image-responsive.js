@@ -343,6 +343,17 @@ functions: {
         return;
       }
       
+      // Capture current floating offset before disabling float
+      if (pImg.particles.movement.floating.enabled) {
+        const current_floating_offset = pImg.functions.particles.calculateFloatingOffset();
+        pImg.image.animation.float_offset = { 
+          x: current_floating_offset.x, 
+          y: current_floating_offset.y 
+        };
+      } else {
+        pImg.image.animation.float_offset = { x: 0, y: 0 };
+      }
+      
       // Reset to first frame for click-to-play behavior
       pImg.image.animation.current_frame = pImg.image.animation.frames[0];
       
@@ -357,6 +368,9 @@ functions: {
     
     stop: function() {
       pImg.image.animation.is_playing = false;
+      
+      // Clear the captured float offset when animation stops
+      pImg.image.animation.float_offset = null;
       
       // Restore cursor when animation stops
       pImg.canvas.el.style.cursor = 'pointer';
@@ -463,9 +477,25 @@ functions: {
   };
 
   pImg.functions.particles.SingleImageParticle.prototype.draw = function() {
+    let drawX = this.x;
+    let drawY = this.y;
+    
+    // Apply floating offset if enabled and animation is not playing
+    if (pImg.particles.movement.floating.enabled && !pImg.image.animation.is_playing) {
+      const floating_offset = pImg.functions.particles.calculateFloatingOffset();
+      drawX += floating_offset.x;
+      drawY += floating_offset.y;
+    }
+    
+    // Apply captured float offset during animation to prevent position shift
+    if (pImg.image.animation.is_playing && pImg.image.animation.float_offset) {
+      drawX += pImg.image.animation.float_offset.x;
+      drawY += pImg.image.animation.float_offset.y;
+    }
+    
     pImg.canvas.context.fillStyle = this.color;
     pImg.canvas.context.beginPath();
-    pImg.canvas.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    pImg.canvas.context.arc(drawX, drawY, this.radius, 0, Math.PI * 2, false);
     pImg.canvas.context.fill();
   };
 
@@ -517,9 +547,25 @@ functions: {
   };
 
   pImg.functions.particles.SecondaryParticle.prototype.draw = function() {
+    let drawX = this.x;
+    let drawY = this.y;
+    
+    // Apply floating offset if enabled and animation is not playing
+    if (pImg.particles.movement.floating.enabled && !pImg.image.animation.is_playing) {
+      const floating_offset = pImg.functions.particles.calculateFloatingOffset();
+      drawX += floating_offset.x;
+      drawY += floating_offset.y;
+    }
+    
+    // Apply captured float offset during animation to prevent position shift
+    if (pImg.image.animation.is_playing && pImg.image.animation.float_offset) {
+      drawX += pImg.image.animation.float_offset.x;
+      drawY += pImg.image.animation.float_offset.y;
+    }
+    
     pImg.canvas.context.fillStyle = this.color;
     pImg.canvas.context.beginPath();
-    pImg.canvas.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    pImg.canvas.context.arc(drawX, drawY, this.radius, 0, Math.PI * 2, false);
     pImg.canvas.context.fill();
   };
 
@@ -840,6 +886,18 @@ functions: {
     if (Math.sqrt((p.dest_x - p.x) ** 2 + (p.dest_y - p.y) ** 2) >= pImg.particles.movement.restless.value) {
       p.restlessness.on_curr_frame = false;
     }
+  };
+
+  pImg.functions.particles.calculateFloatingOffset = function() {
+    if (!pImg.particles.movement.floating.enabled) {
+      return { x: 0, y: 0 };
+    }
+    
+    const config = pImg.particles.movement.floating;
+    const time = performance.now() / 1000;
+    const phase = (time * config.frequency * 2 * Math.PI) + config.phase_offset;
+    
+    return { x: 0, y: Math.sin(phase) * config.amplitude };
   };
 
   pImg.functions.particles.animateParticles = function() {
