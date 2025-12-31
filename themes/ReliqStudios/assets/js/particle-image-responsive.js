@@ -28,6 +28,9 @@ const ParticleImageDisplayer = function(tag_id, canvas_el, params) {
           value: 10,
         }
       },
+      scatter: {
+        force: 3
+      },
       interactivity: {
         on_hover: {
           enabled: true,
@@ -374,7 +377,8 @@ functions: {
       // Disable floating permanently after animation stops
       pImg.particles.movement.floating.enabled = false;
       
-
+      // Scatter particles and make them stay there
+      pImg.functions.particles.scatterParticles();
     },
     
     setFrame: function(frameNum) {
@@ -899,6 +903,39 @@ functions: {
     const phase = (time * config.frequency * 2 * Math.PI) + config.phase_offset;
     
     return { x: 0, y: Math.sin(phase) * config.amplitude };
+  };
+
+  pImg.functions.particles.scatterParticles = function() {
+    // Get scatter force with default
+    const scatterForce = (pImg.particles.scatter && pImg.particles.scatter.force) || 3;
+    
+    // Scatter all primary particles away from their destinations
+    for (let p of pImg.particles.array) {
+      // Calculate random scatter direction
+      const scatterAngle = Math.random() * 2 * Math.PI;
+      
+      // Set new destination far from current position
+      p.dest_x = p.x + Math.cos(scatterAngle) * scatterForce * 30;
+      p.dest_y = p.y + Math.sin(scatterAngle) * scatterForce * 30;
+      
+      // Give particles initial velocity in scatter direction
+      p.vx = Math.cos(scatterAngle) * scatterForce;
+      p.vy = Math.sin(scatterAngle) * scatterForce;
+      
+      // Reduce friction to allow particles to travel
+      p.friction = 0.85;
+    }
+    
+    // Also scatter secondary particles if they exist
+    if (pImg.particles.secondary_array && pImg.particles.secondary_array.length > 0) {
+      for (let p of pImg.particles.secondary_array) {
+        const scatterAngle = Math.random() * 2 * Math.PI;
+        
+        p.vx = Math.cos(scatterAngle) * scatterForce * 0.6;
+        p.vy = Math.sin(scatterAngle) * scatterForce * 0.6;
+        p.friction = 0.85;
+      }
+    }
   };
 
   pImg.functions.particles.animateParticles = function() {
