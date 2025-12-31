@@ -372,6 +372,9 @@ functions: {
       // Clear the captured float offset when animation stops
       pImg.image.animation.float_offset = null;
       
+      // Disable floating permanently after animation stops
+      pImg.particles.movement.floating.enabled = false;
+      
       // Restore cursor when animation stops
       pImg.canvas.el.style.cursor = 'pointer';
     },
