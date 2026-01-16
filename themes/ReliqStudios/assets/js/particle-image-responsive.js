@@ -379,6 +379,9 @@ functions: {
       
       // Scatter particles and make them stay there
       pImg.functions.particles.scatterParticles();
+      
+      // Start fade-out after scatter
+      pImg.functions.particles.startFadeOut();
     },
     
     setFrame: function(frameNum) {
@@ -498,10 +501,14 @@ functions: {
       drawY += pImg.image.animation.float_offset.y;
     }
     
+    // Apply fade-out opacity if enabled
+    const opacity = (pImg.particles.fade_out && pImg.particles.fade_out.enabled && pImg.particles.fade_out.active) ? pImg.particles.fade_out.opacity : 1;
     pImg.canvas.context.fillStyle = this.color;
+    pImg.canvas.context.globalAlpha = opacity;
     pImg.canvas.context.beginPath();
     pImg.canvas.context.arc(drawX, drawY, this.radius, 0, Math.PI * 2, false);
     pImg.canvas.context.fill();
+    pImg.canvas.context.globalAlpha = 1; // Reset global alpha
   };
 
   /*
@@ -568,10 +575,14 @@ functions: {
       drawY += pImg.image.animation.float_offset.y;
     }
     
+    // Apply fade-out opacity if enabled
+    const opacity = (pImg.particles.fade_out && pImg.particles.fade_out.enabled && pImg.particles.fade_out.active) ? pImg.particles.fade_out.opacity : 1;
     pImg.canvas.context.fillStyle = this.color;
+    pImg.canvas.context.globalAlpha = opacity;
     pImg.canvas.context.beginPath();
     pImg.canvas.context.arc(drawX, drawY, this.radius, 0, Math.PI * 2, false);
     pImg.canvas.context.fill();
+    pImg.canvas.context.globalAlpha = 1; // Reset global alpha
   };
 
   /*
@@ -831,6 +842,18 @@ functions: {
       pImg.functions.interactivity.interactWithClient(p);
     }
     
+    // Handle scatter behavior for secondary particles
+    if (p.is_scattered) {
+      // Move towards scatter destination like primary particles
+      p.acc_x = (p.dest_x - p.x) / 500;
+      p.acc_y = (p.dest_y - p.y) / 500;
+      p.vx = (p.vx + p.acc_x) * p.friction;
+      p.vy = (p.vy + p.acc_y) * p.friction;
+      p.x += p.vx;
+      p.y += p.vy;
+      return; // Skip normal movement when scattered
+    }
+    
     // Apply random movement if enabled (always apply regardless of mouse proximity)
     if (p.random_movement.enabled) {
       // Calculate target velocity based on configured direction and speed
@@ -931,16 +954,63 @@ functions: {
       for (let p of pImg.particles.secondary_array) {
         const scatterAngle = Math.random() * 2 * Math.PI;
         
-        p.vx = Math.cos(scatterAngle) * scatterForce * 0.6;
-        p.vy = Math.sin(scatterAngle) * scatterForce * 0.6;
+        // Store original position for potential return, and set new scatter destination
+        if (!p.scatter_original) {
+          p.scatter_original = { x: p.x, y: p.y };
+        }
+        
+        // Set new destination far from current position
+        p.dest_x = p.x + Math.cos(scatterAngle) * scatterForce * 25;
+        p.dest_y = p.y + Math.sin(scatterAngle) * scatterForce * 25;
+        
+        // Give particles initial velocity in scatter direction
+        p.vx = Math.cos(scatterAngle) * scatterForce * 0.8;
+        p.vy = Math.sin(scatterAngle) * scatterForce * 0.8;
+        
+        // Reduce friction to allow particles to travel
         p.friction = 0.85;
+        
+        // Flag that this secondary particle is scattered
+        p.is_scattered = true;
       }
+    }
+  };
+
+  pImg.functions.particles.startFadeOut = function() {
+    // Check if fade-out is enabled in config
+    if (!pImg.particles.fade_out || !pImg.particles.fade_out.enabled) {
+      return;
+    }
+    
+    // Initialize fade-out state
+    pImg.particles.fade_out.start_time = performance.now();
+    pImg.particles.fade_out.opacity = 1.0;
+    pImg.particles.fade_out.active = true;
+  };
+
+  pImg.functions.particles.updateFadeOut = function() {
+    if (!pImg.particles.fade_out || !pImg.particles.fade_out.enabled || !pImg.particles.fade_out.active) {
+      return;
+    }
+    
+    const elapsed = performance.now() - pImg.particles.fade_out.start_time;
+    const progress = Math.min(elapsed / pImg.particles.fade_out.duration_ms, 1);
+    
+    // Update opacity (fade to 0)
+    pImg.particles.fade_out.opacity = 1 - progress;
+    
+    // When fade is complete, clear all particles
+    if (progress >= 1) {
+      pImg.particles.array = [];
+      pImg.particles.secondary_array = [];
+      pImg.particles.fade_out.active = false;
     }
   };
 
   pImg.functions.particles.animateParticles = function() {
     pImg.functions.canvas.clear()
     pImg.functions.particles.updateParticles();
+    pImg.functions.particles.updateFadeOut();
     
     // Determine render order based on secondary particles configuration
     const renderConfig = pImg.secondary_particles_config;

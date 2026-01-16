@@ -37,6 +37,10 @@
     "scatter": {
       "force": 10
     },
+    "fade_out": {
+      "enabled": true,
+      "duration_ms": 2000
+    },
     "interactivity": {
       "on_hover": {
         "enabled": true,
@@ -66,7 +70,7 @@
     },
     "position": {
       "x_img_pct": -15,
-      "y_img_pct": -8
+      "y_img_pct": -15
     },
     "size": {
       "canvas_pct": 50,
