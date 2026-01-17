@@ -346,6 +346,11 @@ functions: {
         return;
       }
       
+      // Check if animation has already been played once
+      if (pImg.image.animation.has_played_once) {
+        return; // Don't restart animation if it's already been played
+      }
+      
       // Capture current floating offset before disabling float
       if (pImg.particles.movement.floating.enabled) {
         const current_floating_offset = pImg.functions.particles.calculateFloatingOffset();
@@ -362,7 +367,7 @@ functions: {
       
       pImg.image.animation.is_playing = true;
       pImg.image.animation.last_frame_time = performance.now();
-      
+      pImg.image.animation.has_played_once = true; // Mark as played
 
       
       this.animate();
@@ -1465,8 +1470,20 @@ window.cancelRequestAnimFrame = (function() {
 })();
 
 window.pImgDom = [];
+window.particleImageInitialized = false;
 
 window.particleImageDisplay = function(tag_id) {
+  // Global initialization check to prevent multiple instances
+  if (window.particleImageInitialized) {
+    return;
+  }
+  
+  // Check if instance already exists for this tag_id
+  const existingInstance = pImgDom.find(instance => instance.canvas?.parentElement?.id === tag_id);
+  if (existingInstance) {
+    return; // Already initialized, don't create another instance
+  }
+
   // get target element by ID, check for existing canvases
   const pImage_el = document.getElementById(tag_id),
       canvas_classname = 'particle-image-canvas-el',
@@ -1499,6 +1516,7 @@ window.particleImageDisplay = function(tag_id) {
           // parse parameters & launch display
         const params = JSON.parse(xhr.responseText);
         pImgDom.push(new ParticleImageDisplayer(tag_id, canvas, params));
+        window.particleImageInitialized = true; // Mark as globally initialized
       } else {
 
       }
@@ -1605,4 +1623,7 @@ window.mergeSecondaryConfig = function(primary, secondary) {
   return merged;
 };
 
-window.particleImageDisplay("particle-image");
+// Only initialize if not already done
+if (!window.particleImageInitialized) {
+  window.particleImageDisplay("particle-image");
+}
