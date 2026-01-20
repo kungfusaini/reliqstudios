@@ -1,8 +1,9 @@
 {{ $main := resources.Get "js/main.js" }}
 {{ $particleImage := resources.Get "js/particle-image-responsive.js" }}
+{{ $contentLoader := resources.Get "js/content-loader.js" }}
 {{ $menu := resources.Get "js/menu.js" }}
 {{ $prism := resources.Get "js/prism.js" }}
-{{ $secureJS := slice $main $particleImage $menu $prism | resources.Concat "bundle.js" | resources.Minify | resources.Fingerprint "sha512" }}
+{{ $secureJS := slice $main $particleImage $contentLoader $menu $prism | resources.Concat "bundle.js" | resources.Minify | resources.Fingerprint "sha512" }}
 <script type="text/javascript" src="{{ $secureJS.RelPermalink }}" integrity="{{ $secureJS.Data.Integrity }}"></script>
 
 {{ range $val := $.Site.Params.customJS }}

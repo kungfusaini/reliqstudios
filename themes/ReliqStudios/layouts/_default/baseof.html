@@ -11,7 +11,9 @@
 
                 <div id="particle-image" data-params-src="/js/particle-params.json"></div>
 
-                {{ block "main" . }}{{ end }}
+                <div id="main-content">
+                    {{ block "main" . }}{{ end }}
+                </div>
 
                 {{ block "footer" . }}
                     {{ partial "footer.html" . }}
