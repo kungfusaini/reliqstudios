@@ -36,16 +36,6 @@ const ContentLoader = function() {
     // Listen for particle animation completion
     document.addEventListener('particleAnimationComplete', handleParticleAnimationComplete)
     console.log('ContentLoader: Event listener added for particleAnimationComplete')
-    
-    // Add fallback timeout in case particle animation doesn't trigger
-    setTimeout(() => {
-      console.log('ContentLoader: Fallback triggered - showing content after timeout')
-      if (contentElement.style.visibility === 'hidden') {
-        console.log('ContentLoader: Content still hidden, forcing show')
-        showContent()
-        cleanupParticleSystem()
-      }
-    }, 10000) // 10 second fallback
   }
   
   const handleParticleAnimationComplete = function(event) {
