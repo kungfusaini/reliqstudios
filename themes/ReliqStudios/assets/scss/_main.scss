@@ -14,7 +14,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Roboto",
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, "Roboto",
     "Segoe UI", Helvetica, Arial, sans-serif;
   font-display: auto;
   font-size: 1rem;
@@ -37,6 +37,7 @@ body {
   }
 }
 
+h1,
 h2,
 h3,
 h4,
@@ -44,7 +45,9 @@ h5,
 h6 {
   display: flex;
   align-items: center;
+  justify-content: center;
   line-height: 1.3;
+  text-align: center;
 }
 
 h1 {
@@ -173,7 +176,7 @@ em, i, strong {
 }
 
 > code {
-  font-family: Consolas, Monaco, Andale Mono, Ubuntu Mono, monospace;
+  font-family: 'Google Sans', Consolas, Monaco, Andale Mono, Ubuntu Mono, monospace;
   font-display: auto;
   font-feature-settings: normal;
   padding: 1px 6px;

@@ -78,16 +78,8 @@ const ContentLoader = function() {
   
   const cleanupParticleSystem = function() {
     if (particleContainer) {
-      // Fade out and remove the particle canvas
-      particleContainer.style.transition = `opacity ${config.fadeOutDuration}ms ease-out`
-      particleContainer.style.opacity = '0'
-      
-      setTimeout(() => {
-        if (particleContainer.parentNode) {
-          particleContainer.parentNode.removeChild(particleContainer)
-        }
-        console.log('ContentLoader: Particle system cleaned up')
-      }, config.fadeOutDuration)
+      // Keep the particle container for background particles - do not remove
+      console.log('ContentLoader: Keeping particle system for background particles')
     }
   }
   

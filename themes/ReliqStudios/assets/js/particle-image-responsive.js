@@ -583,10 +583,8 @@ functions: {
       drawY += pImg.image.animation.float_offset.y;
     }
     
-    // Apply fade-out opacity if enabled
-    const opacity = (pImg.particles.fade_out && pImg.particles.fade_out.enabled && pImg.particles.fade_out.active) ? pImg.particles.fade_out.opacity : 1;
     pImg.canvas.context.fillStyle = this.color;
-    pImg.canvas.context.globalAlpha = opacity;
+    pImg.canvas.context.globalAlpha = 1;
     pImg.canvas.context.beginPath();
     pImg.canvas.context.arc(drawX, drawY, this.radius, 0, Math.PI * 2, false);
     pImg.canvas.context.fill();
@@ -1012,10 +1010,10 @@ functions: {
     
     console.log('ParticleImageDisplayer: Fade-out progress:', progress.toFixed(2), 'opacity:', pImg.particles.fade_out.opacity.toFixed(2));
     
-    // When fade is complete, clear all particles and emit event
+    // When fade is complete, clear only primary particles, keep secondary particles
     if (progress >= 1) {
       pImg.particles.array = [];
-      pImg.particles.secondary_array = [];
+      // Keep secondary particles: pImg.particles.secondary_array = [];
       pImg.particles.fade_out.active = false;
       
       console.log('ParticleImageDisplayer: Emitting particleAnimationComplete event')
