@@ -857,6 +857,15 @@ functions: {
       p.vy = (p.vy + p.acc_y) * p.friction;
       p.x += p.vx;
       p.y += p.vy;
+      
+      // Check if particle has slowed down enough to transition to random movement
+      const velocity = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (velocity < 0.1) {
+        p.is_scattered = false;
+        p.scatter_original = null;
+        // Reset friction to normal
+        p.friction = Math.random() * 0.01 + 0.92;
+      }
       return; // Skip normal movement when scattered
     }
     
@@ -979,6 +988,11 @@ functions: {
         
         // Flag that this secondary particle is scattered
         p.is_scattered = true;
+        
+        // Re-initialize random direction for when scattering ends
+        if (p.random_movement && p.random_movement.enabled) {
+          p.random_movement.current_direction = Math.random() * 2 * Math.PI;
+        }
       }
     }
   };
@@ -1015,6 +1029,15 @@ functions: {
       pImg.particles.array = [];
       // Keep secondary particles: pImg.particles.secondary_array = [];
       pImg.particles.fade_out.active = false;
+      
+      // Clear scattered state only after particles have slowed down from scatter momentum
+      // The velocity check in updateSecondaryParticle will handle transitioning to random movement
+      if (pImg.secondary_particles_config && pImg.particles.secondary_array.length > 0) {
+        for (let p of pImg.particles.secondary_array) {
+          p.scatter_original = null;
+          // Don't clear is_scattered here - let updateSecondaryParticle do it based on velocity
+        }
+      }
       
       console.log('ParticleImageDisplayer: Emitting particleAnimationComplete event')
       const event = new CustomEvent('particleAnimationComplete', {
