@@ -401,7 +401,7 @@ functions: {
     },
     
     stop: function() {
-      console.log('ParticleImageDisplayer: Animation.stop() called')
+
       pImg.image.animation.is_playing = false;
       
       // Clear the captured float offset when animation stops
@@ -411,11 +411,11 @@ functions: {
       pImg.particles.movement.floating.enabled = false;
       
       // Scatter particles and make them stay there
-      console.log('ParticleImageDisplayer: About to scatter particles')
+
       pImg.functions.particles.scatterParticles();
       
       // Start fade-out after scatter
-      console.log('ParticleImageDisplayer: About to start fade-out')
+
       pImg.functions.particles.startFadeOut();
     },
     
@@ -971,7 +971,7 @@ functions: {
   };
 
   pImg.functions.particles.scatterParticles = function() {
-    console.log('ParticleImageDisplayer: scatterParticles() called')
+
     // Get scatter force with default
     const scatterForce = (pImg.particles.scatter && pImg.particles.scatter.force) || 3;
     
@@ -1027,11 +1027,11 @@ functions: {
   pImg.functions.particles.startFadeOut = function() {
     // Check if fade-out is enabled in config
     if (!pImg.particles.fade_out || !pImg.particles.fade_out.enabled) {
-      console.log('ParticleImageDisplayer: Fade-out not enabled, skipping');
+
       return;
     }
     
-    console.log('ParticleImageDisplayer: Starting fade-out');
+
     // Initialize fade-out state
     pImg.particles.fade_out.start_time = performance.now();
     pImg.particles.fade_out.opacity = 1.0;
@@ -1049,7 +1049,7 @@ functions: {
     // Update opacity (fade to 0)
     pImg.particles.fade_out.opacity = 1 - progress;
     
-    console.log('ParticleImageDisplayer: Fade-out progress:', progress.toFixed(2), 'opacity:', pImg.particles.fade_out.opacity.toFixed(2));
+
     
     // When fade is complete, clear only primary particles, keep secondary particles
     if (progress >= 1) {
@@ -1066,7 +1066,7 @@ functions: {
         }
       }
       
-      console.log('ParticleImageDisplayer: Emitting particleAnimationComplete event')
+
       const event = new CustomEvent('particleAnimationComplete', {
         detail: { 
           timestamp: performance.now(),
@@ -1074,7 +1074,7 @@ functions: {
         }
       });
       document.dispatchEvent(event);
-      console.log('ParticleImageDisplayer: Event dispatched')
+
     }
   };
 
@@ -1584,18 +1584,18 @@ window.pImgDom = [];
 window.particleImageInitialized = false;
 
 window.particleImageDisplay = function(tag_id) {
-  console.log('ParticleImageDisplayer: particleImageDisplay called with tag_id:', tag_id)
+
   
   // Global initialization check to prevent multiple instances
   if (window.particleImageInitialized) {
-    console.log('ParticleImageDisplayer: Already initialized globally, returning')
+
     return;
   }
   
   // Check if instance already exists for this tag_id
   const existingInstance = pImgDom.find(instance => instance.canvas?.parentElement?.id === tag_id);
   if (existingInstance) {
-    console.log('ParticleImageDisplayer: Instance already exists for tag_id, returning')
+
     return; // Already initialized, don't create another instance
   }
 
@@ -1604,7 +1604,7 @@ window.particleImageDisplay = function(tag_id) {
       canvas_classname = 'particle-image-canvas-el',
       existing_canvases = pImage_el.getElementsByClassName(canvas_classname);
 
-  console.log('ParticleImageDisplayer: Found element:', !!pImage_el, 'tag_id:', tag_id)
+
 
   // remove any existing canvases within div
   if (existing_canvases.length) {
@@ -1630,15 +1630,15 @@ window.particleImageDisplay = function(tag_id) {
     xhr.open("GET", params_json, false);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 200) {
-          console.log('ParticleImageDisplayer: Params loaded successfully')
+
           // parse parameters & launch display
         const params = JSON.parse(xhr.responseText);
-        console.log('ParticleImageDisplayer: Creating ParticleImageDisplayer instance')
+
         pImgDom.push(new ParticleImageDisplayer(tag_id, canvas, params));
         window.particleImageInitialized = true; // Mark as globally initialized
-        console.log('ParticleImageDisplayer: Initialization complete')
+
       } else {
-        console.log('ParticleImageDisplayer: Params loading failed - readyState:', xhr.readyState, 'status:', xhr.status)
+
       }
     };
     xhr.send();
@@ -1744,10 +1744,10 @@ window.mergeSecondaryConfig = function(primary, secondary) {
 };
 
 // Only initialize if not already done
-console.log('ParticleImageDisplayer: Checking initialization - already initialized:', window.particleImageInitialized)
+
 if (!window.particleImageInitialized) {
-  console.log('ParticleImageDisplayer: Initializing particle system...')
+
   window.particleImageDisplay("particle-image");
 } else {
-  console.log('ParticleImageDisplayer: Already initialized, skipping')
+
 }
