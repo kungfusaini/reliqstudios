@@ -6,6 +6,14 @@
   padding: 16px 0;
   background: transparent;
   z-index: 3;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+
+  &.fade-in {
+    opacity: 1;
+    visibility: visible;
+  }
 
   &__left {
     display: flex;

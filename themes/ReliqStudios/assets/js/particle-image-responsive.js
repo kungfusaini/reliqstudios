@@ -228,6 +228,11 @@ functions: {
           }
           
           pImg.functions.particles.animateParticles();
+
+          // Dispatch event to signal particles are ready for fade-in
+          window.particleImageDisplayerReady = true
+          const event = new CustomEvent('particleImageReady')
+          document.dispatchEvent(event)
         });
       } else {
         // Original static image behavior
@@ -242,6 +247,11 @@ functions: {
         }
         
         pImg.functions.particles.animateParticles();
+
+        // Dispatch event to signal particles are ready for fade-in
+        window.particleImageDisplayerReady = true
+        const event = new CustomEvent('particleImageReady')
+        document.dispatchEvent(event)
       }
     });
     
@@ -252,6 +262,11 @@ functions: {
           pImg.secondary_particles_config
         );
         pImg.functions.particles.animateParticles();
+
+        // Dispatch event to signal particles are ready for fade-in (even on error)
+        window.particleImageDisplayerReady = true
+        const event = new CustomEvent('particleImageReady')
+        document.dispatchEvent(event)
       }
     });
     
