@@ -1258,11 +1258,13 @@ functions: {
     
     if (needsTouchMove) {
       pImg.canvas.el.addEventListener('touchmove', function(e) {
-        const pos_x = e.touches[0].clientX;
-        const pos_y = e.touches[0].clientY;
+        e.preventDefault();
+        const rect = pImg.canvas.el.getBoundingClientRect();
+        const pos_x = e.touches[0].clientX - rect.left;
+        const pos_y = e.touches[0].clientY - rect.top;
         pImg.mouse.x = pos_x;
         pImg.mouse.y = pos_y;
-      });
+      }, { passive: false });
       pImg.canvas.el.addEventListener('touchend', function(e) {
         pImg.mouse.x = null;
         pImg.mouse.y = null;
@@ -1276,23 +1278,62 @@ functions: {
     
     // Add click-to-play animation trigger if animation is enabled
     if (pImg.image.animation.enabled) {
+      let touchStartX = null;
+      let touchStartY = null;
+      let touchStartTime = null;
+      let isTouchEvent = false;
+      const dragThreshold = 10;
+      const tapMaxDuration = 300;
+
       pImg.canvas.el.addEventListener('click', function(e) {
+        if (isTouchEvent) {
+          isTouchEvent = false;
+          return;
+        }
         e.preventDefault();
         // Only start if not already playing to prevent overlap
         if (!pImg.image.animation.is_playing) {
           pImg.functions.animation.start();
         }
       });
-      
+
       pImg.canvas.el.addEventListener('touchstart', function(e) {
-        // Prevent triggering on drag
         if (e.touches.length === 1) {
-          e.preventDefault();
-          // Only start if not already playing to prevent overlap
-          if (!pImg.image.animation.is_playing) {
-            pImg.functions.animation.start();
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+          isTouchEvent = true;
+        }
+      }, { passive: true });
+
+      pImg.canvas.el.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 1 && touchStartX !== null) {
+          const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+          const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+          if (deltaX > dragThreshold || deltaY > dragThreshold) {
+            touchStartX = null;
+            touchStartY = null;
+            touchStartTime = null;
           }
         }
+      }, { passive: true });
+
+      pImg.canvas.el.addEventListener('touchend', function(e) {
+        if (e.changedTouches.length === 1 && touchStartX !== null && touchStartTime !== null) {
+          const deltaX = Math.abs(e.changedTouches[0].clientX - touchStartX);
+          const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY);
+          const duration = Date.now() - touchStartTime;
+
+          if (deltaX < dragThreshold && deltaY < dragThreshold && duration < tapMaxDuration) {
+            e.preventDefault();
+            if (!pImg.image.animation.is_playing) {
+              pImg.functions.animation.start();
+            }
+          }
+        }
+        touchStartX = null;
+        touchStartY = null;
+        touchStartTime = null;
       }, { passive: false });
     }
     
@@ -1325,9 +1366,13 @@ functions: {
   };
 
   pImg.functions.interactivity.interactWithClient = function(p) {
-    // Skip interactions during animation playback
+    // Skip hover interactions during animation playback, but allow touch interactions
     if (pImg.image.animation && pImg.image.animation.is_playing) {
-      return;
+      // Check if there's active touch/mouse input
+      if (pImg.mouse.x == null || pImg.mouse.y == null) {
+        return; // Skip if no active input
+      }
+      // Allow touch interactions during animation
     }
     
     // Check if this is a secondary particle

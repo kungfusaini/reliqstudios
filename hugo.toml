@@ -17,6 +17,10 @@ theme = "ReliqStudios"
   keywords = "web development, design, digital agency"
   images = [""]
   
+  # Plausible Analytics
+  plausibleDataDomain = "reliqstudios.com"
+  plausibleScriptSource = "/stats/js/script.outbound-links.pageview-props.tagged-events.js"
+  
   # Home subtitle
   homeSubtitle = "Building Digital Experiences"
   
