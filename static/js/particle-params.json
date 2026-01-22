@@ -29,7 +29,7 @@
       },
       "floating": {
         "enabled": true,
-        "amplitude": 4,
+        "amplitude": 8,
         "frequency": 0.25,
         "phase_offset": 0
       }
