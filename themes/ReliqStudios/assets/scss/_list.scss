@@ -32,14 +32,14 @@
 
   .post {
     &-title {
-      font-size: 1rem;
+      font-size: $text-base;
       margin: 5px 0 5px 0;
     }
 
     &-year {
       padding-top: 6px;
       margin-right: 1.8em;
-      font-size: 1.6em;
+      font-size: $text-lg;
       @include dimmed;
 
       @media #{$media-size-tablet} {

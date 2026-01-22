@@ -45,11 +45,11 @@ a.button {
 
   &.link {
     background: none;
-    font-size: 1rem;
+    font-size: $text-base;
   }
 
   &.small {
-    font-size: .8rem;
+    font-size: $text-sm;
   }
 
   &.wide {
@@ -70,7 +70,7 @@ a.button {
     margin-bottom: 5px;
     text-decoration: none;
     text-align: center;
-    font-size: 13px;
+    font-size: $text-sm;
     font-weight: 500;
     border-radius: 8px;
     border: 1px solid transparent;
