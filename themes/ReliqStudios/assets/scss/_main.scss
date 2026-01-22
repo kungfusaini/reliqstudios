@@ -14,8 +14,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, "Roboto",
-    "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family: 'Google Sans Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   font-display: auto;
   font-size: 1rem;
   line-height: 1.54;
@@ -349,6 +348,34 @@ hr {
   background-attachment: fixed;
   background-size: cover;
   background-position: center center;
+}
+
+// Hint overlay
+.hint-overlay {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20%;
+  font-size: clamp(0.75rem, 2vw, 1rem);
+  font-family: 'Google Sans Code', monospace !important;
+  font-weight: 500;
+  color: $color;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+  z-index: 100;
+  pointer-events: none;
+  text-align: center;
+
+  @media #{$media-size-phone} {
+    bottom: 25%;
+    font-size: clamp(0.625rem, 2.5vw, 0.875rem);
+  }
+
+  &.visible {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 // Main content hiding for particle animation
