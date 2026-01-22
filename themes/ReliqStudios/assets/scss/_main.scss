@@ -47,6 +47,7 @@ h6 {
 
 h1 {
   font-size: $text-display;
+  font-weight: 700;
 
   @media #{$media-size-phone} {
     flex-wrap: wrap;
@@ -60,11 +61,13 @@ h1 {
 
 h2 {
   font-size: $text-lg;
+  font-weight: 500;
   margin-top: 0.5em;
 }
 
 h3 {
   font-size: $text-md;
+  font-weight: 400;
 }
 
 h4 {
@@ -342,9 +345,8 @@ hr {
   left: 50%;
   transform: translateX(-50%);
   bottom: 20%;
-  font-size: $text-sm;
-  font-family: 'Google Sans Code', monospace !important;
-  font-weight: 500;
+  font-size: $text-md;
+  font-weight: 400;
   color: $color;
   opacity: 0;
   visibility: hidden;
