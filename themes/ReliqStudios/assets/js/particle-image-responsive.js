@@ -139,7 +139,7 @@ functions: {
   ========================================
   */
   pImg.functions.canvas.init = function() {
-    pImg.canvas.context = pImg.canvas.el.getContext('2d');
+    pImg.canvas.context = pImg.canvas.el.getContext('2d', { willReadFrequently: true });
     pImg.canvas.el.width = pImg.canvas.w;
     pImg.canvas.el.height = pImg.canvas.h;
     pImg.canvas.aspect_ratio = pImg.canvas.w / pImg.canvas.h;
@@ -147,24 +147,36 @@ functions: {
   };
 
   pImg.functions.canvas.onResize = function() {
+    // Skip if animation has already completed
+    if (pImg.image.animation.enabled && pImg.image.animation.has_played_once && pImg.particles.array.length === 0) {
+      return;
+    }
+
     pImg.canvas.w = pImg.canvas.el.offsetWidth;
     pImg.canvas.h = pImg.canvas.el.offsetHeight;
     pImg.canvas.el.width = pImg.canvas.w;
     pImg.canvas.el.height = pImg.canvas.h;
     pImg.canvas.aspect_ratio = pImg.canvas.w / pImg.canvas.h;
-    
+
+    // Clear existing particles to prevent duplicates
+    pImg.particles.array = [];
+    pImg.particles.secondary_array = [];
+
     // Store current density if not set
     if (!pImg.currentDensity) {
       pImg.currentDensity = pImg.functions.utils.calculateResponsiveDensity();
     }
-    
+
     pImg.functions.image.resize();
     const image_pixels = pImg.functions.canvas.getImagePixels();
     pImg.functions.particles.createImageParticles(image_pixels, true);
-    
-    // Update particle sizes and density for new viewport
-    pImg.functions.particles.updateParticleSizes();
-    pImg.functions.particles.updateParticleDensity();
+
+    // Reinitialize secondary particles if enabled
+    if (pImg.secondary_particles_config) {
+      pImg.particles.secondary_array = pImg.functions.particles.createSecondaryParticles(
+        pImg.secondary_particles_config
+      );
+    }
   };
 
   pImg.functions.canvas.clear = function() {
