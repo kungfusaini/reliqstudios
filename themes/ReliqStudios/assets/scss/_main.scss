@@ -47,6 +47,15 @@ h6 {
 
 h1 {
   font-size: $text-display;
+
+  @media #{$media-size-phone} {
+    flex-wrap: wrap;
+
+    .h1-line {
+      display: inline-block;
+      width: 100%;
+    }
+  }
 }
 
 h2 {
