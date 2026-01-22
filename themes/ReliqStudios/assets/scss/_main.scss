@@ -26,6 +26,7 @@ body {
 
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   flex-direction: column;
 
   background-color: $background;
@@ -69,7 +70,8 @@ h1 {
 h2 {
   font-size: $text-lg;
   font-weight: 500;
-  margin-top: 0.5em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 
 h3 {
@@ -213,16 +215,6 @@ blockquote {
     padding: 10px;
   }
 
-  &:before {
-    content: "”";
-    font-family: Georgia, serif;
-    font-display: auto;
-    font-size: 3.875rem;
-    position: absolute;
-    left: -40px;
-    top: -20px;
-  }
-
   p:first-of-type {
     margin-top: 0;
   }
@@ -255,9 +247,13 @@ ol ol {
   position: relative;
   z-index: 2;
   padding: 0 10px;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 
   @media #{$media-size-phone} {
     padding: 0 10px;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 
@@ -269,6 +265,12 @@ ol ol {
   justify-content: center;
   margin: 0;
   width: 100%;
+
+  main {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
 
   @media #{$media-size-phone} {
     margin-top: 0;
@@ -390,5 +392,3 @@ hr {
 .highlight {
   margin: 10px auto;
 }
-
-

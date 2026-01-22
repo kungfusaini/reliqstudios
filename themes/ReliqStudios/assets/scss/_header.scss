@@ -3,7 +3,10 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 16px 0;
+  padding: 16px 16px;
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   background: transparent;
   z-index: 3;
   opacity: 0;
