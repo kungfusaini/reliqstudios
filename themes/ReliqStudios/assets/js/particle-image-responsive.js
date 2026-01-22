@@ -597,19 +597,6 @@ functions: {
     let drawX = this.x;
     let drawY = this.y;
     
-    // Apply floating offset if enabled and animation is not playing
-    if (pImg.particles.movement.floating.enabled && !pImg.image.animation.is_playing) {
-      const floating_offset = pImg.functions.particles.calculateFloatingOffset();
-      drawX += floating_offset.x;
-      drawY += floating_offset.y;
-    }
-    
-    // Apply captured float offset during animation to prevent position shift
-    if (pImg.image.animation.is_playing && pImg.image.animation.float_offset) {
-      drawX += pImg.image.animation.float_offset.x;
-      drawY += pImg.image.animation.float_offset.y;
-    }
-    
     pImg.canvas.context.fillStyle = this.color;
     pImg.canvas.context.globalAlpha = 1;
     pImg.canvas.context.beginPath();
