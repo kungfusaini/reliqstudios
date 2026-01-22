@@ -13,16 +13,13 @@ theme = "ReliqStudios"
   dateformNumTime = "2006-01-02 15:04"
   
   # Metadata
-  description = "Reliq Studios - Creative Digital Solutions"
-  keywords = "web development, design, digital agency"
+  description = "Reliq Studios | Handcrafted Web Solutions"
+  keywords = "web development, design, digital agency, seo, search engine optimisation, web design, front end, design"
   images = [""]
   
   # Plausible Analytics
   plausibleDataDomain = "reliqstudios.com"
   plausibleScriptSource = "/stats/js/script.outbound-links.pageview-props.tagged-events.js"
-  
-  # Home subtitle
-  homeSubtitle = "Building Digital Experiences"
   
   # Features
   enableThemeToggle = false

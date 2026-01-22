@@ -57,12 +57,17 @@ h1 {
   font-size: $text-display;
   font-weight: 700;
 
+  .h1-line + .h1-line {
+    margin-left: 0.3em;
+  }
+
   @media #{$media-size-phone} {
     flex-wrap: wrap;
 
     .h1-line {
       display: inline-block;
       width: 100%;
+      margin-left: 0;
     }
   }
 }
