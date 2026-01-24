@@ -1,0 +1,3 @@
+[submodule "themes/reliqtheme"]
+	path = themes/reliqtheme
+	url = git@github.com:kungfusaini/reliqtheme.git
