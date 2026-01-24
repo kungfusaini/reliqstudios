@@ -1,7 +1,7 @@
 baseURL = "https://reliqstudios.com"
 title = "Reliq Studios"
 languageCode = "en-us"
-theme = "ReliqStudios"
+theme = "reliqtheme"
 
 [pagination]
   pagerSize = 10
