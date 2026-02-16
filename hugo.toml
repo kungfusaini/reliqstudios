@@ -54,3 +54,26 @@ theme = "reliqtheme"
     subtitle = "Creative Digital Solutions"
 
 [menu]
+  [[menu.main]]
+    identifier = "about"
+    name = "about"
+    weight = 1
+    url = "#about"
+  
+  [[menu.main]]
+    identifier = "services"
+    name = "services"
+    weight = 2
+    url = "#services"
+  
+  [[menu.main]]
+    identifier = "projects"
+    name = "projects"
+    weight = 3
+    url = "#projects"
+  
+  [[menu.main]]
+    identifier = "contact"
+    name = "contact"
+    weight = 4
+    url = "#contact"
