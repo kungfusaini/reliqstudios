@@ -61,16 +61,16 @@ theme = "reliqtheme"
     url = "#about"
   
   [[menu.main]]
-    identifier = "services"
-    name = "services"
-    weight = 2
-    url = "#services"
-  
-  [[menu.main]]
     identifier = "projects"
     name = "projects"
-    weight = 3
+    weight = 2
     url = "#projects"
+  
+  [[menu.main]]
+    identifier = "services"
+    name = "services"
+    weight = 3
+    url = "#services"
   
   [[menu.main]]
     identifier = "contact"
