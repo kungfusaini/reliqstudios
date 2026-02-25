@@ -30,7 +30,7 @@ theme = "reliqtheme"
     name = "Reliq Studios Team"
 
 [params.Logo]
-  path = "/logo.svg"
+  path = "/logo.png"
   alt = "Reliq Studios Logo"
   logoHomeLink = "/"
 
