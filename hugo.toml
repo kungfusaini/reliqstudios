@@ -29,12 +29,16 @@ theme = "reliqtheme"
   [params.author]
     name = "Reliq Studios Team"
 
-[params.Logo]
-  path = "/logo.png"
-  alt = "Reliq Studios Logo"
-  logoHomeLink = "/"
+  [params.Logo]
+    path = "/logo.png"
+    alt = "Reliq Studios Logo"
+    logoHomeLink = "/"
 
-[params.footer]
+  [params.favicon]
+    mask = "#3c3836"
+    msapplication = "#3c3836"
+    
+  [params.footer]
   trademark = 2025
   rss = false
   copyright = false
